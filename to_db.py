@@ -21,7 +21,7 @@ gt_df2 = gt_df.iloc[: ,9:]
 df1 = pd.read_csv('22_basic_info.csv')
 (pd.concat([df1, gt_df2], axis=1).to_csv('22_GBR_genotype.csv', index=False, na_rep='N/A'))
 
-
+############
 
 con = sqlite3.connect("chr22.db")
 cur = con.cursor()
@@ -37,16 +37,6 @@ gene_names.to_sql("gene_names", con, index=False)
 # genotype table
 GBR_gt = pd.read_csv("22_GBR_genotype.csv")
 GBR_gt.to_sql('GBR_genotype',con, index=False)
-
-
-# cur.execute("""SELECT * FROM gene_names INNER JOIN basic_info ON gene_names.POS = basic_info.POS
-#             WHERE gene_names.POS = '10519410'  """)
-# print(cur.fetchall())
-
-# cur.execute("""SELECT * FROM GBR_genotype WHERE POS  = '50807929'""")
-# print(cur.fetchall())
-
-# cur.execute("DROP TABLE GBR_genotype")
 
 con.commit()
 con.close()
