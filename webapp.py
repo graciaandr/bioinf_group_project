@@ -20,6 +20,10 @@ def index():
 		return render_template('index.html', data=data)
 	return render_template('index.html')
 
+# @app.route('/')
+# def index():
+# 		return render_template('result.html', data=data)
+# 	return render_template('result.html')
 
 # start the web server
 if __name__ == '__main__':
