@@ -33,7 +33,7 @@ def use_gene(search_value):
 def use_pos(search_value):
     with sqlite3.connect("chr22.db") as connection:
         cursor = connection.cursor()
-        result = cursor.execute(f"SELECT * FROM GBR_genotype WHERE POS = '{search_value}'").fetchall()
+        result = cursor.execute(f"SELECT * FROM gene_names WHERE POS = '{search_value}'").fetchall()
     return result
 
 def search_db(search_type, search_value):
