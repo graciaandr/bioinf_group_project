@@ -1,7 +1,7 @@
 import sqlite3, csv
 import pandas as pd
 import numpy as np
-
+import re
 
 # change genotype symbols to alphabet
 def gt_to_alp(data, start_col, end_col):
@@ -18,7 +18,14 @@ def single_alt(df):
     df.drop(['ALT_2', 'ALT_3'], axis=1, inplace=True)
     df.rename(columns={"ALT_1" : "ALT"}, inplace=True)
     return df
-    
+
+# filter out irrelevant gene IDs
+def gene_id_refinement(df):
+    # take out those Gene IDs of the sorts "ENS\d+-ENS\d+""
+    pat = r'(\w+)\-(\w+)'
+    df2 = df[df.GENEID.str.contains(pat) == False]
+    return df2
+
 # extract SNPs and biallelic
 def snps_only(data):
     data2 = data['ALT'].str.split(expand=True).apply(lambda x: x.str.len()) <= 1
@@ -28,8 +35,8 @@ def snps_only(data):
     return data5
 
 # insert values into table in db
-def insert_table(csv_file, database_name, table_name):
-    with sqlite3.connect(database_name) as con:
+def insert_table(csv_file, table_name):
+    with sqlite3.connect("chr22.db") as con:
         cursor = con.cursor()
         with open (csv_file, 'r') as i:
             reader = csv.reader(i)
@@ -40,6 +47,18 @@ def insert_table(csv_file, database_name, table_name):
                 cursor.execute(query, data)
             con.commit()
 
+# load data with gene names for chromosome 22
+df = pd.read_csv('22_gene_data.csv', sep=',')
+df1 = gene_id_refinement(df) # remove irrelevant vant Gene ID rows
+df1.to_csv("filtered_22_gene_data.csv", index = False, header = True) # save as extra df
+
+# df1 = pd.read_csv('filtered_22_gene_data.csv', sep=',')
+df1['FK_ID']= df1['FK_ID'].str.replace(r'^chr22', '22') # replace chr22:XXX:XXX with 22:XXX:XXX
+
+df2 = pd.read_csv('filtered_SNPs_info.csv', sep=',') # load data set that has chrom PK_ID POS REF ALT (was in vcf)
+df3 = df1[df1['FK_ID'].isin(df2['PK_ID'])] # filter gene name table for IDs that are in primary key table
+# print(df3.shape)
+df3.to_csv("gene_names_filtered_for_PK.csv", index = False, header = True) # save this new gene names table
 
 
 ############### query functions ################
@@ -58,18 +77,18 @@ def use_gene(search_value):
         result = cursor.execute(f"SELECT * FROM gene_data WHERE GENE = '{search_value}'").fetchall()
     return result
 
-# def use_pos(search_value):
-#     with sqlite3.connect("chr22.db") as connection:
-#         cursor = connection.cursor()
-#         result = cursor.execute(f"SELECT * FROM gt_al_freq WHERE POS = '{search_value}'").fetchall()
-#     return result
+def use_pos(search_value):
+    with sqlite3.connect("chr22.db") as connection:
+        cursor = connection.cursor()
+        result = cursor.execute(f"SELECT * FROM gt_al_freq WHERE POS = '{search_value}'").fetchall()
+    return result
 
 def search_db(search_type, search_value):
     if search_type == "snp_id":
         return use_id(search_value)
     elif search_type == "gene_name":
         return use_gene(search_value)
-    elif search_type == "pos_numbers":
+    elif search_type == "genomic_coordinate":
         return use_pos(search_value)
     else:
         return "404: Not Found"
