@@ -21,12 +21,10 @@ def single_alt(df):
 
 # filter out irrelevant gene IDs
 def gene_id_refinement(df):
-    # ENS\d+-ENS\d+
-    # df2 = df[df['GENEID'].apply(lambda x: False if re.search('ENS\d+-ENS\d+', x) else True)]
+    # take out those Gene IDs of the sorts "ENS\d+-ENS\d+""
     pat = r'(\w+)\-(\w+)'
     df2 = df[df.GENEID.str.contains(pat) == False]
     return df2
-
 
 # extract SNPs and biallelic
 def snps_only(data):
@@ -49,6 +47,18 @@ def insert_table(csv_file, table_name):
                 cursor.execute(query, data)
             con.commit()
 
+# load data with gene names for chromosome 22
+df = pd.read_csv('22_gene_data.csv', sep=',')
+df1 = gene_id_refinement(df) # remove irrelevant vant Gene ID rows
+df1.to_csv("filtered_22_gene_data.csv", index = False, header = True) # save as extra df
+
+# df1 = pd.read_csv('filtered_22_gene_data.csv', sep=',')
+df1['FK_ID']= df1['FK_ID'].str.replace(r'^chr22', '22') # replace chr22:XXX:XXX with 22:XXX:XXX
+
+df2 = pd.read_csv('filtered_SNPs_info.csv', sep=',') # load data set that has chrom PK_ID POS REF ALT (was in vcf)
+df3 = df1[df1['FK_ID'].isin(df2['PK_ID'])] # filter gene name table for IDs that are in primary key table
+# print(df3.shape)
+df3.to_csv("gene_names_filtered_for_PK.csv", index = False, header = True) # save this new gene names table
 
 
 ############### query functions ################
