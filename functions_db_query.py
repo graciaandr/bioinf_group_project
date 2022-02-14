@@ -1,7 +1,7 @@
 import sqlite3, csv
 import pandas as pd
 import numpy as np
-
+import re
 
 # change genotype symbols to alphabet
 def gt_to_alp(data, start_col, end_col):
@@ -18,7 +18,16 @@ def single_alt(df):
     df.drop(['ALT_2', 'ALT_3'], axis=1, inplace=True)
     df.rename(columns={"ALT_1" : "ALT"}, inplace=True)
     return df
-    
+
+# filter out irrelevant gene IDs
+def gene_id_refinement(df):
+    # ENS\d+-ENS\d+
+    # df2 = df[df['GENEID'].apply(lambda x: False if re.search('ENS\d+-ENS\d+', x) else True)]
+    pat = r'(\w+)\-(\w+)'
+    df2 = df[df.GENEID.str.contains(pat) == False]
+    return df2
+
+
 # extract SNPs and biallelic
 def snps_only(data):
     data2 = data['ALT'].str.split(expand=True).apply(lambda x: x.str.len()) <= 1
