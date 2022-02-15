@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import re
 
+
 # change genotype symbols to alphabet
 def gt_to_alp(data, start_col, end_col):
     for pos in range(start_col, end_col):
@@ -14,7 +15,7 @@ def gt_to_alp(data, start_col, end_col):
 
 # filter out multi-allelic
 def single_alt(df):
-    df = df[df['ALT_2'].isna()] 
+    df = df[df['ALT_2'].isna()] #extract rows with 1 ALT
     df.drop(['ALT_2', 'ALT_3'], axis=1, inplace=True)
     df.rename(columns={"ALT_1" : "ALT"}, inplace=True)
     return df
@@ -25,7 +26,7 @@ def gene_id_refinement(df):
     pat = r'(\w+)\-(\w+)'
     df2 = df[df.GENEID.str.contains(pat) == False]
     return df2
-
+    
 # extract SNPs and biallelic
 def snps_only(data):
     data2 = data['ALT'].str.split(expand=True).apply(lambda x: x.str.len()) <= 1
@@ -35,8 +36,8 @@ def snps_only(data):
     return data5
 
 # insert values into table in db
-def insert_table(csv_file, table_name):
-    with sqlite3.connect("chr22.db") as con:
+def insert_table(csv_file, database_name, table_name):
+    with sqlite3.connect(database_name) as con:
         cursor = con.cursor()
         with open (csv_file, 'r') as i:
             reader = csv.reader(i)
@@ -47,48 +48,60 @@ def insert_table(csv_file, table_name):
                 cursor.execute(query, data)
             con.commit()
 
-# load data with gene names for chromosome 22
-df = pd.read_csv('22_gene_data.csv', sep=',')
-df1 = gene_id_refinement(df) # remove irrelevant vant Gene ID rows
-df1.to_csv("filtered_22_gene_data.csv", index = False, header = True) # save as extra df
-
-# df1 = pd.read_csv('filtered_22_gene_data.csv', sep=',')
-df1['FK_ID']= df1['FK_ID'].str.replace(r'^chr22', '22') # replace chr22:XXX:XXX with 22:XXX:XXX
-
-df2 = pd.read_csv('filtered_SNPs_info.csv', sep=',') # load data set that has chrom PK_ID POS REF ALT (was in vcf)
-df3 = df1[df1['FK_ID'].isin(df2['PK_ID'])] # filter gene name table for IDs that are in primary key table
-# print(df3.shape)
-df3.to_csv("gene_names_filtered_for_PK.csv", index = False, header = True) # save this new gene names table
 
 
 ############### query functions ################
 
 def use_id(search_value):
-    with sqlite3.connect("chr22.db") as connection:
+    with sqlite3.connect("test.db") as connection:
         search_value = search_value.lower()
         cursor = connection.cursor()
         result = cursor.execute(f"SELECT * FROM gene_data WHERE ID = '{search_value}'").fetchall()
     return result
 
 def use_gene(search_value):
-    with sqlite3.connect("chr22.db") as connection:
+    with sqlite3.connect("test.db") as connection:
         search_value = search_value.upper()
         cursor = connection.cursor()
         result = cursor.execute(f"SELECT * FROM gene_data WHERE GENE = '{search_value}'").fetchall()
     return result
 
 def use_pos(search_value):
-    with sqlite3.connect("chr22.db") as connection:
+    # 2 types of input: ranged number separated by hyphen or a position number
+    range = r"(^\d+)\-(\d+$)"
+    position = r"(^\d+$)"
+    with sqlite3.connect("test.db") as connection:
         cursor = connection.cursor()
-        result = cursor.execute(f"SELECT * FROM gt_al_freq WHERE POS = '{search_value}'").fetchall()
-    return result
+        if re.search(range, f"{search_value}") is not None:
+            input_nums = (str(search_value)).split('-')
+            result = cursor.execute(f"SELECT * FROM gene_data WHERE POS BETWEEN '{input_nums[0]}' AND '{input_nums[1]}'").fetchall()
+            return result
+        elif re.search(position, f"{search_value}") is not None:
+            result = cursor.execute(f"SELECT * FROM gene_data WHERE POS = '{search_value}'").fetchall()
+            return result
+        else:
+            return "Enter a valid position range" #invalid input
 
 def search_db(search_type, search_value):
     if search_type == "snp_id":
         return use_id(search_value)
     elif search_type == "gene_name":
         return use_gene(search_value)
-    elif search_type == "genomic_coordinate":
+    elif search_type == "pos_numbers":
         return use_pos(search_value)
     else:
         return "404: Not Found"
+
+
+
+################ population selection ################
+def select_pop(population, data):
+    filtered_data = data.iloc[:,:8]
+    for pop in population:
+        if pop == 'gbr':
+            filtered_data = filtered_data.join(data.iloc[:,[8]])
+        elif pop == 'chx':
+            filtered_data = filtered_data.join(data.iloc[:,[9]])
+        elif pop == 'mxn':
+            filtered_data = filtered_data.join(data.iloc[:,[10]])
+    return filtered_data
