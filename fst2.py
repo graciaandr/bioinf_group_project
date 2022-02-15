@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import allel
+from matplotlib import pyplot as plt
 
 df_gbr= pd.read_csv("/data/scratch/bt211065/2022_02_01_Groupproject/test/gbr_freq.csv")
 
@@ -84,13 +85,27 @@ def calculate_fst(population1, population2):
 #fst_chinese_mexican=calculate_fst(array_chinese,array_gujarati)
 
 
-for one in [array_chinese, array_luhya, array_gujarati,array_gbr,array_mexican]:
-  for two in [array_chinese, array_luhya, array_gujarati,array_gbr,array_mexican]:
-      print(calculate_fst(one,two))
-    
-  
-  
-  
+#for one in [array_chinese, array_luhya, array_gujarati,array_gbr,array_mexican]:
+ # for two in [array_chinese, array_luhya, array_gujarati,array_gbr,array_mexican]:
+  #    print(calculate_fst(one,two))
+      
+      
+# compute slidjng window 
+
+
+def slide_for_fst(pop1,pop2):
+  # call function in moving hudson allel function 
+    slide = allel.moving_hudson_fst(extract_and_makearray(pop1), 
+    extract_and_makearray(pop2),size=20000)
+    return slide
+
+windows_average = slide_for_fst(df_gbr, df_mexican)
+print(windows_average)
+plt.plot(windows_average)
+plt.xlabel("Windows")
+plt.ylabel("Average FST index")
+plt.savefig('testgraph.png')
+plt.show()  
 
 
 
