@@ -95,13 +95,36 @@ def search_db(search_type, search_value):
 
 
 ################ population selection ################
-def select_pop(population, data):
+
+# col_name = "FK_ID,POS,ID,REF,ALT,IMPACT,GENE,GENEID,AF_ALT_GBR,AF_ALT_CDX,AF_ALF_MXL"
+col_name = ""
+with sqlite3.connect('test.db') as connection:
+    cursor = connection.cursor()
+    col_data = cursor.execute("PRAGMA table_info(gene_data);").fetchall()
+for value in col_data:
+    col_name += value[1] + ','
+col_name = col_name[:-1]
+col_list = col_name.split(',')
+
+# print(col_list)
+
+def select_pop(pop_list, data):
+    data = pd.DataFrame(data, columns=col_list)
     filtered_data = data.iloc[:,:8]
-    for pop in population:
+    for pop in pop_list:
         if pop == 'gbr':
-            filtered_data = filtered_data.join(data.iloc[:,[8]])
-        elif pop == 'chx':
-            filtered_data = filtered_data.join(data.iloc[:,[9]])
-        elif pop == 'mxn':
-            filtered_data = filtered_data.join(data.iloc[:,[10]])
+            pop_cols = [col for col in data.columns if 'GBR' in col]
+            filtered_data = filtered_data.join(data[pop_cols])
+        elif pop == 'lwk':
+            pop_cols = [col for col in data.columns if 'LWK' in col]
+            filtered_data = filtered_data.join(data[pop_cols])
+        elif pop == 'mxl':
+            pop_cols = [col for col in data.columns if 'MXL' in col]
+            filtered_data = filtered_data.join(data[pop_cols])
+        elif pop == 'cdx':
+            pop_cols = [col for col in data.columns if 'CDX' in col]
+            filtered_data = filtered_data.join(data[pop_cols])
+        elif pop == 'gih':
+            pop_cols = [col for col in data.columns if 'GIH' in col]
+            filtered_data = filtered_data.join(data[pop_cols])
     return filtered_data
