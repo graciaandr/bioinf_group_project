@@ -5,51 +5,17 @@
 {% endblock %}
 
 {% block content %}
-    <h2>Select One</h2><br>
-    <form method="post" action="/"> 
+    <link rel= "stylesheet" href= "{{ url_for('static',filename='css/style.css') }}">
+    <h1>Welcome to SNPs Portal</h1>
+    <form method="post" action="/">
         <input type="radio" name="search_type" value="snp_id" checked> SNP ID
         <br>
         <input type="radio" name="search_type" value="gene_name"> Gene Name
         <br>
-        <input type="radio" name="search_type" value="genomic_coordinate"> Genomic Coordinate
+        <input type="radio" name="search_type" value="pos_numbers"> Genomic Coordinate
         <br><br>
         <input type="text" name="search_value" >
         <input type="submit" value="Search">
         <br><br>
     </form>
-
-    {% if data|length > 1 %}
-        <form action="/" method="post">
-            Choose populations:<br>
-            <input type="checkbox" name="population" value="GBR"> British | 
-            <input type="checkbox" name="population" value="FIN"> Finnish | 
-            <input type="checkbox" name="population" value="CHS"> Chinese | 
-            <input type="checkbox" name="population" value="PUR"> Puerto Rican |
-            <input type="checkbox" name="population" value="CLM"> Colombian |
-            <br><br>
-            Choose Summary Statistics:<br>
-            <input type="checkbox" name="summarystats" value="stats1"> Stats 1 |
-            <input type="checkbox" name="summarystats" value="stats2"> Stats 2 |
-            <input type="checkbox" name="summarystats" value="stats3"> Stats 3 |
-            <br><br>
-            <input type="submit" value="Calculate">
-            {% for value in data %}
-                <div>
-                    <br><a href="">{{value[0]}}</a><br>
-                    {{value[2]}}<br>
-                    {{value[1]}}<br><br>
-                </div>
-            {% endfor %}
-        </form>
-    {% else %}
-        <form action="/" method="post">
-            {% for value in data %}
-                <div>
-                    <a href="">{{value[0]}}</a><br>
-                    {{value[2]}}<br>
-                    {{value[1]}}<br><br>
-                </div>
-            {% endfor %}
-        </form>
-    {% endif %}
 {% endblock %}
