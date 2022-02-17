@@ -7,39 +7,6 @@ df_gbr= pd.read_csv("/data/scratch/bt211065/2022_02_01_Groupproject/test/gbr_fre
 
 df_mexican= pd.read_csv("/data/scratch/bt211065/2022_02_01_Groupproject/test/mexican_freq.csv")
 
-# extract ref and alt 
-#allele_count_gbr = df_gbr.loc[:,['AC_ref', 'AC_alt']]
-# no nan values
-
-#total variants gbr 
-#total_variantsgbr = allele_count_gbr.shape[0]
-
-#exctract ref and alt
-#allele_count_mexican =df_mexican.loc[:,['AC_ref', 'AC_alt']] 
-#no nan values 
-
-#total varaints mxl
-#total_variantsmxl = allele_count_mexican.shape[0]
-
-# gbr to array
-#gbr_array = allele_count_gbr.to_numpy()
-# reshape to n_varaints, n_alleles
-#reshape_gbr = gbr_array.reshape(total_variantsgbr,2)
-
-# mxl to array
-#mxl_array= allele_count_gbr.to_numpy()
-#reshape mxl 
-#reshape_mxl = mxl_array.reshape(total_variantsmxl,2)
-
-
-# pass allele count to hudson 
-#pop1,pop2= allel.hudson_fst(reshape_gbr,reshape_mxl)
-# fst = pop1/pop2 diviude allele coumts
-#fst = np.sum(pop1) / np.sum(pop2)
-#print("FST VALUE",fst)
-#print(pop1, pop2)
-
-
 df_chinese= pd.read_csv("/data/scratch/bt211065/2022_02_01_Groupproject/test/chinese_freq.csv")
 
 df_luhya= pd.read_csv("/data/scratch/bt211065/2022_02_01_Groupproject/test/luhya_freq.csv")
@@ -76,30 +43,20 @@ def calculate_fst(population1, population2):
   # fst = pop1/pop2 diviide by sum of  allele coumts for each population
   fst = np.sum(pop1) / np.sum(pop2)
   #print(pop1,pop1)
-  print("The FST value is",fst)
+  return ("The FST value is",fst) 
   
-  
-#fst_chinese_luhya=calculate_fst(array_chinese,array_luhya)
-#fst_chinese_gujarati=calculate_fst(array_chinese,array_gujarati)
-#fst_chinese_gbr=calculate_fst(array_chinese,array_gbr)
-#fst_chinese_mexican=calculate_fst(array_chinese,array_gujarati)
-
-
-#for one in [array_chinese, array_luhya, array_gujarati,array_gbr,array_mexican]:
- # for two in [array_chinese, array_luhya, array_gujarati,array_gbr,array_mexican]:
-  #    print(calculate_fst(one,two))
       
       
-# compute slidjng window 
+######### compute sliding window ##########
 
 
-def slide_for_fst(pop1,pop2):
+def slide_for_fst(pop1,pop2, window_size):
   # call function in moving hudson allel function 
     slide = allel.moving_hudson_fst(extract_and_makearray(pop1), 
-    extract_and_makearray(pop2),size=20000)
+    extract_and_makearray(pop2),size= window_size)
     return slide
 
-windows_average = slide_for_fst(df_gbr, df_mexican)
+windows_average = slide_for_fst(df_gbr, df_mexican, 20000)
 print(windows_average)
 plt.plot(windows_average)
 plt.xlabel("Windows")
