@@ -53,31 +53,38 @@ def insert_table(csv_file, database_name, table_name):
 ############### query functions ################
 
 def use_id(search_value):
-    with sqlite3.connect("test.db") as connection:
+    with sqlite3.connect("chromosome22_snps.db") as connection:
         search_value = search_value.lower()
         cursor = connection.cursor()
-        result = cursor.execute(f"SELECT * FROM gene_data WHERE ID = '{search_value}'").fetchall()
+        result = cursor.execute(f"SELECT * FROM snp_table WHERE rsID = '{search_value}'").fetchall()
     return result
 
 def use_gene(search_value):
-    with sqlite3.connect("test.db") as connection:
+    with sqlite3.connect("chromosome22_snps.db") as connection:
         search_value = search_value.upper()
         cursor = connection.cursor()
-        result = cursor.execute(f"SELECT * FROM gene_data WHERE GENE = '{search_value}'").fetchall()
+        result = cursor.execute(f"""SELECT * FROM snp_table WHERE GENE = '{search_value}'
+                                    OR GENE_ALIAS LIKE '%{search_value}%'
+                                    """).fetchall()
+# SELECT * FROM mytable
+# WHERE column1 LIKE '%word1%'
+#    OR column1 LIKE '%word2%'
+# SELECT * FROM snp_table WHERE GENE_ALIAS LIKE '{search_value}'
+        # result = cursor.execute(f"SELECT * FROM snp_table WHERE GENE = '{search_value}'").fetchall()
     return result
 
 def use_pos(search_value):
     # 2 types of input: ranged number separated by hyphen or a position number
     range = r"(^\d+)\-(\d+$)"
     position = r"(^\d+$)"
-    with sqlite3.connect("test.db") as connection:
+    with sqlite3.connect("chromosome22_snps.db") as connection:
         cursor = connection.cursor()
         if re.search(range, f"{search_value}") is not None:
             input_nums = (str(search_value)).split('-')
-            result = cursor.execute(f"SELECT * FROM gene_data WHERE POS BETWEEN '{input_nums[0]}' AND '{input_nums[1]}'").fetchall()
+            result = cursor.execute(f"SELECT * FROM snp_table WHERE POS BETWEEN '{input_nums[0]}' AND '{input_nums[1]}'").fetchall()
             return result
         elif re.search(position, f"{search_value}") is not None:
-            result = cursor.execute(f"SELECT * FROM gene_data WHERE POS = '{search_value}'").fetchall()
+            result = cursor.execute(f"SELECT * FROM snp_table WHERE POS = '{search_value}'").fetchall()
             return result
         else:
             return "Enter a valid position range" #invalid input
@@ -94,37 +101,55 @@ def search_db(search_type, search_value):
 
 
 
-################ population selection ################
+################ statistics ################
 
-# col_name = "FK_ID,POS,ID,REF,ALT,IMPACT,GENE,GENEID,AF_ALT_GBR,AF_ALT_CDX,AF_ALF_MXL"
-col_name = ""
-with sqlite3.connect('test.db') as connection:
-    cursor = connection.cursor()
-    col_data = cursor.execute("PRAGMA table_info(gene_data);").fetchall()
-for value in col_data:
-    col_name += value[1] + ','
-col_name = col_name[:-1]
-col_list = col_name.split(',')
-
-# print(col_list)
-
-def select_pop(pop_list, data):
+# all statistics need dataframe as input
+def to_df(data): # data is list of tuples
+    # get column names from database 
+    col_name = ""
+    with sqlite3.connect ('chromosome22_snps.db') as connection:
+        cursor = connection.cursor()
+        col_table = cursor.execute("PRAGMA table_info(snp_table);").fetchall()
+    for value in col_table:
+        col_name += value[1] + ','
+    col_name = col_name[:-1] # remove the last comma
+    col_list = col_name.split(',') # put col names in a list
     data = pd.DataFrame(data, columns=col_list)
-    filtered_data = data.iloc[:,:8]
-    for pop in pop_list:
-        if pop == 'gbr':
-            pop_cols = [col for col in data.columns if 'GBR' in col]
-            filtered_data = filtered_data.join(data[pop_cols])
-        elif pop == 'lwk':
-            pop_cols = [col for col in data.columns if 'LWK' in col]
-            filtered_data = filtered_data.join(data[pop_cols])
-        elif pop == 'mxl':
-            pop_cols = [col for col in data.columns if 'MXL' in col]
-            filtered_data = filtered_data.join(data[pop_cols])
-        elif pop == 'cdx':
-            pop_cols = [col for col in data.columns if 'CDX' in col]
-            filtered_data = filtered_data.join(data[pop_cols])
-        elif pop == 'gih':
-            pop_cols = [col for col in data.columns if 'GIH' in col]
-            filtered_data = filtered_data.join(data[pop_cols])
-    return filtered_data
+    return data
+
+def calcShannonDiv(df, pop):
+    AF_pop = [col for col in df.columns if pop in col]
+    AF_col = [col for col in AF_pop if 'AF_ALT' in col]
+    n = df.shape[0] # nrows of data frame
+    df[AF_pop] = df[AF_col].astype(str).astype(float) # column type as float
+    df['norm_ALT'] = df[AF_col]/n # normalize alt. counts
+    df['ln_ALT'] = np.log(df['norm_ALT']) # take natural log (ln) of alt. counts
+    df['shannon'] = df['norm_ALT'] * df['ln_ALT'] # multiply
+    df['shannon'] = df['shannon'].fillna(0) # for cases ln(0) = -inf, set the multiplication as 0
+    shannondiv = df['shannon'].sum() * -1 # calculate sum and multiply with -1 to get shannon diversity
+    df.drop(['norm_ALT', 'ln_ALT'], axis=1, inplace=True)
+    return(shannondiv)
+
+# def select_pop(pop_list, data):
+#     data = pd.DataFrame(data, columns=col_list)
+#     filtered_data = data.iloc[:,:8]
+#     for pop in pop_list:
+#         if pop == 'GBR':
+#             pop_cols = [col for col in data.columns if 'GBR' in col]
+#             filtered_data = filtered_data.join(data[pop_cols])
+#         elif pop == 'LWK':
+#             pop_cols = [col for col in data.columns if 'LWK' in col]
+#             filtered_data = filtered_data.join(data[pop_cols])
+#         elif pop == 'MXL':
+#             pop_cols = [col for col in data.columns if 'MXL' in col]
+#             filtered_data = filtered_data.join(data[pop_cols])
+#         elif pop == 'CDX':
+#             pop_cols = [col for col in data.columns if 'CDX' in col]
+#             filtered_data = filtered_data.join(data[pop_cols])
+#         elif pop == 'GIH':
+#             pop_cols = [col for col in data.columns if 'GIH' in col]
+#             filtered_data = filtered_data.join(data[pop_cols])
+#     return filtered_data
+
+
+#####
