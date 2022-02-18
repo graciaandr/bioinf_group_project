@@ -6,12 +6,21 @@ from numpy.lib.scimath import logn
 from math import e
 from statistics import mean
 import matplotlib.pyplot as plt 
+from math import floor, ceil
 
+# turning off warnings for now:
+import sys
+import warnings
+
+if not sys.warnoptions:
+    warnings.simplefilter("ignore")
+    
 # df = pd.read_csv("freqs_gbr.csv", sep = ";")
 # df = pd.read_csv("freqs_dai_chinese.csv", sep = ";")
 # df = pd.read_csv("freqs_gujarati.csv", sep = ";")
 # df = pd.read_csv("freqs_luhya.csv", sep = ";")
 df = pd.read_csv("freqs_mexican.csv", sep = ";")
+df = df.head(500)
 
 # calculate Shannon Diversity for all SNPs in a data frame
 def calcShannonDiv(df):
@@ -45,9 +54,11 @@ print("Tajima's D:", taj)
 ### Sliding Window Summary Stats ###
 
 # Windowed Shannon Diversity
-def calcWindowedShannonDiv(df, w = 10000):
-    shannon_divs_per_w = []
+def calcWindowedShannonDiv(df, w = None):
     n = df.shape[0] # nrows of data frame
+    if (w == None):
+        w = ceil(n/10)
+    shannon_divs_per_w = []
     df['norm_ALT'] = df['AF_alt']/n
     df['ln_ALT'] = np.log(df['norm_ALT'])
     df['shannon'] = df['norm_ALT'] * df['ln_ALT']
@@ -57,20 +68,40 @@ def calcWindowedShannonDiv(df, w = 10000):
         shannon_divs_per_w.append(shannon_i) # store those values per window in a list/vector
     return(shannon_divs_per_w)
 
-shannondiv = calcWindowedShannonDiv(df, w = 3)
+shannondiv = calcWindowedShannonDiv(df)
 
-# Plot windowed shannon diversity
-# plt.plot(shannondiv,  'ro', markersize = 1)
-# plt.title('Sliding Window - Shannon Diversity Index')
-# plt.ylabel('Shannon Diversity')
-# plt.xlabel('Windows')
+## Histogram
+# hist, bin_edges = np.histogram(shannondiv, 
+#                     range=(np.nanmin(shannondiv),
+#                            np.nanmax(shannondiv)),
+#                     bins='fd')                                        
+# plt.hist(hist, bins='auto')  
+# plt.xlabel('Shannon Div')
+# plt.ylabel('Windows')
+# plt.title('Histogram of Shannon Div')
+# plt.grid(True)
 # plt.show()
+
+## Boxplot
+# fig1, ax1 = plt.subplots()
+# ax1.set_title('Basic Plot')
+# ax1.boxplot(shannondiv)
+# plt.show()
+
+## Linegraph plot of windowed shannon diversity
+plt.plot(shannondiv,  'r', markersize = 1)
+plt.title('Sliding Window - Shannon Diversity Index')
+plt.ylabel('Shannon Diversity')
+plt.xlabel('Windows')
+plt.show()
 
 
 # Windowed Het. Div Index
-def calcWindowedHetDiv(df, w = 1000):
+def calcWindowedHetDiv(df, w = None):
     het_divs_per_w = []
     n = df.shape[0]
+    if (w == None):
+        w = ceil(n/10)
     df = calcHeterozygosity(df)
     for i in range(0,n-w+1):
         ### mean or median ? 
@@ -78,20 +109,20 @@ def calcWindowedHetDiv(df, w = 1000):
         het_divs_per_w.append(het_i)
     return het_divs_per_w
 
-hetDivs = calcWindowedHetDiv(df, w = 3)
+hetDivs = calcWindowedHetDiv(df)
 
-# plt.plot(hetDivs,  'bo', markersize = 1)
-# plt.title('Sliding Window - Heteozygosity Diversity Index')
-# plt.ylabel('Heteozygosity Diversity')
-# plt.xlabel('Windows')
-# plt.ylim(0,0.03)
-# plt.show()
-
+plt.plot(hetDivs,  'b', markersize = 1)
+plt.title('Sliding Window - Heteozygosity Diversity Index')
+plt.ylabel('Heteozygosity Diversity')
+plt.xlabel('Windows')
+plt.show()
 
 
 ## windowed Tajima's D
-def windowedTajimasD(df, w):
+def windowedTajimasD(df, w = None):
     n = df.shape[0]
+    if (w == None):
+        w = ceil(n/10)
     wind_tajd = []
     arr = (df[['AC_ref', 'AC_alt']]).to_numpy() 
     for i in range(0, (n-w+1)):
@@ -100,10 +131,9 @@ def windowedTajimasD(df, w):
         wind_tajd.append(D_i)
     return(wind_tajd)
 
-windowed_tajimasD = windowedTajimasD(df, w = 3)
-
-# plt.plot(windowed_tajimasD,  'go', markersize = 1)
-# plt.title("Sliding Window - Tajima's D")
-# plt.ylabel("Tajima's D")
-# plt.xlabel('Windows')
-# plt.show() 
+windowed_tajimasD = windowedTajimasD(df)
+plt.plot(windowed_tajimasD,  'g', markersize = 1)
+plt.title("Sliding Window - Tajima's D")
+plt.ylabel("Tajima's D")
+plt.xlabel('Windows')
+plt.show() 
