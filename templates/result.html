@@ -12,37 +12,71 @@
             margin-left: 40px;
         }
     </style>
-    <a href="/">back to home page</a><br><br>
+    <br><a href="/">back to home page</a><br><br>
     {% if data|length > 1 %}
-        <form action="/pop_select" method="post">
-            Choose populations:<br>
+        <form action="/stats_pop_select" method="post">
+            <h2>Summary Statistics:</h2>
+            <input type="checkbox" name="summarystats" value="shannon"> Shannon Diversity |
+            <span class="tab"></span><input type="checkbox" name="summarystats" value="hetero"> Heterozygosity |
+            <span class="tab"></span><input type="checkbox" name="summarystats" value="tajima"> Tajima D |
+            <br><br>
+            <h2>Choose populations:</h2>
             <input type="text" name="search_type" value="{{ search_type }}" style="display: none;">
             <input type="text" name="search_value" value="{{ search_value }}" style="display: none;">
-            <input type="checkbox" name="population" value="gbr"> British (European Ancestry) | 
-            <input type="checkbox" name="population" value="lwk"> Luhya (African Ancestry) | 
-            <input type="checkbox" name="population" value="mxl"> Mexican (American Ancestry) |
-            <input type="checkbox" name="population" value="cdx"> Dai Chinese (East Asian Ancestry) | 
-            <input type="checkbox" name="population" value="gih"> Gujarati (South Asian Ancestry) |
-            <br><br>
-            Choose Summary Statistics:<br>
-            <input type="checkbox" name="summarystats" value="shannon"> Shannon Diversity |
-            <input type="checkbox" name="summarystats" value="hetero"> Heterozygosity |
-            <input type="checkbox" name="summarystats" value="tajima"> Tajima D |
+            <input type="checkbox" name="population" value="GBR"> British (European Ancestry) | <br>
+            <input type="checkbox" name="population" value="LWK"> Luhya (African Ancestry) | <br>
+            <input type="checkbox" name="population" value="MXL"> Mexican (American Ancestry) | <br>
+            <input type="checkbox" name="population" value="CDX"> Dai Chinese (East Asian Ancestry) | <br>
+            <input type="checkbox" name="population" value="GIH"> Gujarati (South Asian Ancestry) |
             <br><br>
             <input type="submit" value="Calculate">
-        </form>
+        </form><br>
+        <p style="font-weight: bold;"> Number of Results: {{data|length}} </p>
+        <table style="width:100%">
+            <tr>
+                <th>Position</th>
+                <th>rs ID</th>
+                <th>REF</th>
+                <th>ALT</th>
+                <th>Gene</th>
+                <th>Gene Alias</th>
+            </tr>
             {% for value in data %}
-                <div>
-                    <br><a href="">{{value[7]}}</a><br>
-                    {{value[2]}}<br>
-                    {{value[1]}}<br><br>
-                </div>
+                <tr>
+                    <td>{{value[2]}}</td>
+                    <td>{{value[3]}}</td>
+                    <td>{{value[4]}}</td>
+                    <td>{{value[5]}}</td>
+                    <td>{{value[7]}}</td>
+                    <td>{{value[44]}}</td>
+                </tr>
             {% endfor %}
-        
+        </table><br><br>
     {% elif data|length == 0 %}
-        <p>404 Not Found</p>
+        <p style="font-weight: bold;"> Number of Results: {{data|length}} </p>
     {% else %}
-        <form action="/" method="post">
+        <p style="font-weight: bold;"> Number of Results: {{data|length}} </p>
+        <table style="width:100%">
+            <tr>
+                <th>Position</th>
+                <th>RS Id</th>
+                <th>REF</th>
+                <th>ALT</th>
+                <th>Gene</th>
+                <th>Gene ID</th>
+            </tr>
+            {% for value in data %}
+                <tr>
+                    <td>{{value[1]}}</td>
+                    <td>{{value[2]}}</td>
+                    <td>{{value[3]}}</td>
+                    <td>{{value[4]}}</td>
+                    <td>{{value[6]}}</td>
+                    <td>{{value[7]}}</td>
+                </tr>
+            {% endfor %}
+        </table><br><br>
+        <!-- <form action="/" method="post">
             {% for value in data %}
                 <div>
                     Chromosome 22<br>
@@ -51,14 +85,14 @@
                     REF: {{value[3]}} <span class="tab"></span> ALT:{{value[4]}}
                     <p>Gene name: {{value[6]}}</p>
                     <!-- table for genotype and allele freq for all populations -->
-                    Genotype Frequencies:<br>
-                    <span class="tab"></span>British:<br>
-                    <span class="tab"></span>Luhya:<br>
-                    <span class="tab"></span>Mexican:<br>
-                    <span class="tab"></span>Dai Chinese:<br>
-                    <span class="tab"></span>Gujarati:<br>
-                </div>
-            {% endfor %}
-        </form>
+                    <!-- Genotype Frequencies:<br> -->
+                    <!-- <span class="tab"></span>British:<br> -->
+                    <!-- <span class="tab"></span>Luhya:<br> -->
+                    <!-- <span class="tab"></span>Mexican:<br> -->
+                    <!-- <span class="tab"></span>Dai Chinese:<br> -->
+                    <!-- <span class="tab"></span>Gujarati:<br> -->
+                <!-- </div> -->
+            <!-- {% endfor %} -->
+        <!-- </form> -->
     {% endif %}
 {% endblock %}

@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block head %}
+    {% block title %} Team Celine {% endblock %}
+{% endblock %}
+
+{% block content %}
+    <link rel= "stylesheet" href= "{{ url_for('static',filename='css/style.css') }}">
+   <br><a href="/">back to home page</a><br><br>
+    <form action="/stats_pop_select" method="post">
+        <h2>Summary Statistics:</h2>
+        <input type="checkbox" name="summarystats" value="shannon"> Shannon Diversity |
+        <span class="tab"></span><input type="checkbox" name="summarystats" value="hetero"> Heterozygosity |
+        <span class="tab"></span><input type="checkbox" name="summarystats" value="tajima"> Tajima D |
+        <br><br>
+        <h2>Choose populations:</h2>
+        <input type="text" name="search_type" value="{{ search_type }}" style="display: none;">
+        <input type="text" name="search_value" value="{{ search_value }}" style="display: none;">
+        <input type="checkbox" name="population" value="GBR"> British (European Ancestry) | <br>
+        <input type="checkbox" name="population" value="LWK"> Luhya (African Ancestry) | <br>
+        <input type="checkbox" name="population" value="MXL"> Mexican (American Ancestry) | <br>
+        <input type="checkbox" name="population" value="CDX"> Dai Chinese (East Asian Ancestry) | <br>
+        <input type="checkbox" name="population" value="GIH"> Gujarati (South Asian Ancestry) |
+        <br><br>
+        <input type="submit" value="Calculate"><br>
+    </form>
+    <br>
+    <h2>Shannon:</h2><br>
+    {% for value in shannon %}
+        <p>{{value[0]}} : {{value[1]}} </p><br>
+    {% endfor %}
+    <p style="font-weight: bold;"> Number of Results: {{data|length}} </p>
+    <table style="width:100%">
+        <tr>
+            <th>Position</th>
+            <th>RS Id</th>
+            <th>REF</th>
+            <th>ALT</th>
+            <th>Gene</th>
+            <th>Gene ID</th>
+        </tr>
+        {% for value in data %}
+            <tr>
+                <td>{{value[1]}}</td>
+                <td>{{value[2]}}</td>
+                <td>{{value[3]}}</td>
+                <td>{{value[4]}}</td>
+                <td>{{value[6]}}</td>
+                <td>{{value[7]}}</td>
+            </tr>
+        {% endfor %}
+    </table><br><br>
+
+
+{% endblock %}
