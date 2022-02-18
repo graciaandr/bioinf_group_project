@@ -82,27 +82,36 @@ freq2.rename(columns={"AF_ref":"GBR_AF_REF", "AF_alt":"GBR_AF_ALT",
 
 ################
 
-con = sqlite3.connect("chr22.db")
+con = sqlite3.connect("chromosome22_snps.db")
 cursor = con.cursor()
 
-# population_sample table
-cursor.execute("""CREATE TABLE pop_samples (Sample,Sex, Biosample_ID, Pop_code, Pop_name, 
-                Superpopulation_code, Superpopulation_name, Pop_elastic_ID, Data, 
-                PRIMARY KEY (Sample));""")
-dbq.insert_table('population_samples.csv', 'chr22.db', 'pop_samples')
-
-# genotype table
-cursor.execute("""CREATE TABLE gt_al_freq (PK_ID,CHROM,POS,REF,ALT,GBR_AF_REF,GBR_AF_ALT,GBR_GT00,GBR_GT01,GBR_GT10,
-                PRIMARY KEY (PK_ID));""")
-dbq.insert_table('22_gt_al_freq.csv', 'chr22.db', 'gt_al_freq')
-
-# gene_names table
-cursor.execute("""CREATE TABLE gene_data (FK_ID, POS, ID, REF, ALT, IMPACT, GENE, GENEID,
-                FOREIGN KEY (FK_ID) REFERENCES gt_al_freq(PK_ID));""")
-dbq.insert_table('22_gene_data.csv', 'chr22.db', 'gene_data')
-
-
-
+cursor.execute("""CREATE TABLE snp_table (unique_SNP_ID,CHROM,POS,rsID,REF,ALT,IMPACT,GENE,GENEID,
+                MXL_AF_ref,MXL_AF_alt,MXL_AC_ref,MXL_AC_alt,MXL_GT00,MXL_GT0110,MXL_GT11,
+                CDX_AF_ref,CDX_AF_alt,CDX_AC_ref,CDX_AC_alt,CDX_GT00,CDX_GT0110,CDX_GT11,
+                LWK_AF_ref,LWK_AF_alt,LWK_AC_ref,LWK_AC_alt,LWK_GT00,LWK_GT0110,LWK_GT11,
+                GBR_AF_ref,GBR_AF_alt,GBR_AC_ref,GBR_AC_alt,GBR_GT00,GBR_GT0110,GBR_GT11,
+                GIH_AF_ref,GIH_AF_alt,GIH_AC_ref,GIH_AC_alt,GIH_GT00,GIH_GT0110,GIH_GT11,GENE_ALIAS, 
+                PRIMARY KEY (unique_SNP_ID));""")
+dbq.insert_table('final_complete_SNP_table.csv', 'chromosome22_snps.db', 'snp_table')
 
 con.commit()
 con.close()
+
+
+# # population_sample table
+# cursor.execute("""CREATE TABLE pop_samples (Sample,Sex, Biosample_ID, Pop_code, Pop_name, 
+#                 Superpopulation_code, Superpopulation_name, Pop_elastic_ID, Data, 
+#                 PRIMARY KEY (Sample));""")
+# dbq.insert_table('population_samples.csv', 'chr22.db', 'pop_samples')
+
+# # genotype table
+# cursor.execute("""CREATE TABLE gt_al_freq (PK_ID,CHROM,POS,REF,ALT,GBR_AF_REF,GBR_AF_ALT,GBR_GT00,GBR_GT01,GBR_GT10,
+#                 PRIMARY KEY (PK_ID));""")
+# dbq.insert_table('22_gt_al_freq.csv', 'chr22.db', 'gt_al_freq')
+
+# # gene_names table
+# cursor.execute("""CREATE TABLE gene_data (FK_ID, POS, ID, REF, ALT, IMPACT, GENE, GENEID,
+#                 FOREIGN KEY (FK_ID) REFERENCES gt_al_freq(PK_ID));""")
+# dbq.insert_table('22_gene_data.csv', 'chr22.db', 'gene_data')
+
+
