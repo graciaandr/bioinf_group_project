@@ -1,0 +1,29 @@
+body {
+    background-color: lightsteelblue;
+  }
+
+table {
+    border: 1px solid;
+    background-color: white;
+    color: black;
+  }
+th {
+    height: 50px;
+    border: 2px solid;
+    border-bottom: 3px solid ;
+    text-align: center;
+}
+td {
+    height: 35px;
+    border: 2px solid ;
+}
+
+h1 {
+    color: black;
+    padding: 10px;
+}
+
+h2 {
+    font-size: 20px;
+    text-decoration: underline;
+}
