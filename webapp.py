@@ -1,4 +1,5 @@
 from cgitb import reset
+from os import stat
 from re import search
 from flask import Flask, render_template, redirect, request, url_for, session
 from flask_bootstrap import Bootstrap
@@ -49,6 +50,18 @@ def stats_pop():
 			shannon_list.append(shannon)
 		shannon_df["shannon"] = shannon_list # input shannon values into df
 		shannon = shannon_df.to_numpy() # df to list of tuples for html
+	
+	elif 'tajima' in stats_list:
+		for pop in pop_list:
+			tajima = dbq.calcTajimaD(data_df, pop)
+	
+	# elif 'hetero' in stats_list:
+
+	else:
+		print ("Choose statistics to calculate")
+
+
+
 	return render_template('stats_pop.html', data=data, shannon=shannon)
 
 
