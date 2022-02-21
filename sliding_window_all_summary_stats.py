@@ -42,7 +42,7 @@ print("Shannon Diversity Index:", shannondiv)
 
 def calcHeterozygosity(df):
     df["heterozygosity_per_snp"] = 1-((df['AF_alt'])**2 + (df['AF_ref'])**2) # calculate exp. het. according to formula (always only 2 alleles)
-    df.to_csv('heterozygosity_df_GBR.csv', index = False, header = True)
+    # df.to_csv('heterozygosity_df_GBR.csv', index = False, header = True)
     return(df)
 
 # Tajima's D
