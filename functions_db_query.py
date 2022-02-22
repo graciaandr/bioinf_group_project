@@ -2,6 +2,9 @@ import sqlite3, csv
 import pandas as pd
 import numpy as np
 import re
+import allel as sc
+from math import floor, ceil, e
+from statistics import mean
 
 
 # change genotype symbols to alphabet
@@ -117,18 +120,118 @@ def to_df(data): # data is list of tuples
     data = pd.DataFrame(data, columns=col_list)
     return data
 
+# make a new dataframe for stats???
+def calc_stats(df, stats_list, pop):
+    if 'shannon' in stats_list:
+        return calcShannonDiv(df, pop)
+    elif 'tajima' in stats_list:
+        return calcTajimaD(df, pop)
+    elif 'hetero' in stats_list:
+        return calcHeterozygosity(df, pop)
+    else:
+        pass
+
+
+
+# shannon
 def calcShannonDiv(df, pop):
     AF_pop = [col for col in df.columns if pop in col]
-    AF_col = [col for col in AF_pop if 'AF_ALT' in col]
+    AF_col = [col for col in AF_pop if 'AF_alt' in col]
     n = df.shape[0] # nrows of data frame
-    df[AF_pop] = df[AF_col].astype(str).astype(float) # column type as float
-    df['norm_ALT'] = df[AF_col]/n # normalize alt. counts
-    df['ln_ALT'] = np.log(df['norm_ALT']) # take natural log (ln) of alt. counts
-    df['shannon'] = df['norm_ALT'] * df['ln_ALT'] # multiply
+    df[AF_col] = df[AF_col].astype(str).astype(float) # column type as float
+    df['norm_alt'] = df[AF_col]/n # normalize alt. counts
+    df['ln_alt'] = np.log(df['norm_alt']) # take natural log (ln) of alt. counts
+    df['shannon'] = df['norm_alt'] * df['ln_alt'] # multiply
     df['shannon'] = df['shannon'].fillna(0) # for cases ln(0) = -inf, set the multiplication as 0
     shannondiv = df['shannon'].sum() * -1 # calculate sum and multiply with -1 to get shannon diversity
-    df.drop(['norm_ALT', 'ln_ALT'], axis=1, inplace=True)
+    df.drop(['norm_alt', 'ln_alt'], axis=1, inplace=True)
     return(shannondiv)
+
+
+# Tajima's D
+def calcTajimaD(df, pop):
+    AC_pop = [col for col in df.columns if pop in col] # filter population
+    AC_ref = [col for col in AC_pop if 'AC_ref' in col] # ref allele count
+    AC_alt = [col for col in AC_pop if 'AC_alt' in col] # alt allele count
+    AC_ref = ','.join(AC_ref)
+    AC_alt = ','.join(AC_alt)
+    df[AC_ref] = df[AC_ref].astype(str).astype(int)
+    df[AC_alt] = df[AC_alt].astype(str).astype(int)
+    arr = (df[[AC_ref, AC_alt]]).to_numpy() # take allele counts and save as numpy array
+    taj = sc.allel.tajima_d(arr) # calculate tajima's D using scikit-allel function
+    return (taj)
+
+
+# heterozygosity
+def calcHeterozygosity(df, pop):
+    AF_pop = [col for col in df.columns if pop in col] # filter population
+    AF_ref = [col for col in AF_pop if 'AF_ref' in col] # ref allele freq
+    AF_alt = [col for col in AF_pop if 'AF_alt' in col]
+    AF_ref = ','.join(AF_ref)
+    AF_alt = ','.join(AF_alt) 
+    df[AF_ref] = df[AF_ref].astype(str).astype(float)
+    df[AF_alt] = df[AF_alt].astype(str).astype(float)
+    het = 1-((df[AF_alt])**2 + (df[AF_ref])**2) # calculate exp. het. according to formula (always only 2 alleles)
+    return(het)
+
+
+
+####### sliding window
+
+def windowedShannonDiv(df, pop, w = None):
+    AF_pop = [col for col in df.columns if pop in col]
+    AF_col = [col for col in AF_pop if 'AF_alt' in col]
+    df[AF_col] = df[AF_col].astype(str).astype(float) # column type as float
+    n = df.shape[0] # nrows of data frame
+    if (w == None):
+        w = ceil(n/10)
+    shannon_divs_per_w = []
+    df['norm_alt'] = df[AF_col]/n # normalize alt. counts
+    df['ln_alt'] = np.log(df['norm_alt']) # take natural log (ln) of alt. counts
+    df['shannon'] = df['norm_alt'] * df['ln_alt'] # multiply
+    df['shannon'] = df['shannon'].fillna(0) # for cases ln(0) = -inf, set the multiplication as 0
+    for i in range(0,n-w+1): 
+        shannon_i = (df['shannon'][i:(i+w)]).sum() * -1 # calculate shannon diverseity per window
+        shannon_divs_per_w.append(shannon_i) # store those values per window in a list/vector
+    df.drop(['norm_alt', 'ln_alt'], axis=1, inplace=True)
+    return(shannon_divs_per_w)
+
+def windowedTajimasD(df, pop, w = None):
+    AC_pop = [col for col in df.columns if pop in col] # filter population
+    AC_ref = [col for col in AC_pop if 'AC_ref' in col] # ref allele count
+    AC_alt = [col for col in AC_pop if 'AC_alt' in col] # alt allele count
+    AC_ref = ','.join(AC_ref)
+    AC_alt = ','.join(AC_alt)
+    df[AC_ref] = df[AC_ref].astype(str).astype(int)
+    df[AC_alt] = df[AC_alt].astype(str).astype(int)
+    n = df.shape[0]
+    if (w == None):
+        w = ceil(n/10)
+    wind_tajd = []
+    arr = (df[[AC_ref, AC_alt]]).to_numpy() # take allele counts and save as numpy array
+    for i in range(0, (n-w+1)):
+        ac_window = arr[i:i+w] # set window of allele counts array
+        D_i = sc.allel.tajima_d(ac_window)
+        wind_tajd.append(D_i)
+    return(wind_tajd)
+
+def windowedHetDiv(df, pop, w = None):
+    het_divs_per_w = []
+    n = df.shape[0]
+    if (w == None):
+        w = ceil(n/10)
+    het_vec = calcHeterozygosity(df, pop)
+    for i in range(0,n-w+1):
+        ### mean or median ? 
+        het_i = mean(het_vec[i:(i+w)]) # take mean of the exp. het. for chosen window
+        het_divs_per_w.append(het_i)
+    return het_divs_per_w
+
+
+
+
+
+
 
 # def select_pop(pop_list, data):
 #     data = pd.DataFrame(data, columns=col_list)
