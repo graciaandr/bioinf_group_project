@@ -1,3 +1,4 @@
+from asyncio.proactor_events import _ProactorSocketTransport
 from cgitb import reset
 from os import stat
 from re import search
@@ -41,6 +42,13 @@ def stats_pop():
 	pop_list = request.form.getlist("population")
 	stats_list = request.form.getlist("summarystats")
 	data_df = dbq.to_df(data) # put data into dataframe for stats
+	stats_df = pd.DataFrame({'Population' : pop_list})
+	
+	# for pop in pop_list:
+	# 	stats_df = pd.DataFrame({'population' : pop_list})
+	# 	stats_list = []
+	# 	stats = dbq.calc_stats(data_df, stats_list, pop)
+	# 	print(stats)
 
 	if 'shannon' in stats_list:
 		shannon_df = pd.DataFrame({'pop' : pop_list}) # make df for shannon value per population
@@ -50,19 +58,34 @@ def stats_pop():
 			shannon_list.append(shannon)
 		shannon_df["shannon"] = shannon_list # input shannon values into df
 		shannon = shannon_df.to_numpy() # df to list of tuples for html
-	
+		print(shannon)
+
 	elif 'tajima' in stats_list:
+		tajima_df = pd.DataFrame({'pop' : pop_list})
+		tajima_list = []
 		for pop in pop_list:
 			tajima = dbq.calcTajimaD(data_df, pop)
+			tajima_list.append(tajima)
+		tajima_df["tajima"] = tajima_list
+		tajima = tajima_df.to_numpy()
+		print (tajima)
 	
-	# elif 'hetero' in stats_list:
+	elif 'hetero' in stats_list:
+		hetero_df = pd.DataFrame({'pop' : pop_list})
+		hetero_list = []
+		for pop in pop_list:
+			hetero = dbq.windowedHetDiv(data_df, pop)
+			hetero_list.append(hetero)
+		hetero_df["heterozygosity"] = hetero_list
+		hetero = hetero_df.to_numpy()
+		print(hetero)
 
 	else:
-		print ("Choose statistics to calculate")
+		shannon="Choose statistics to calculate"
 
 
 
-	return render_template('stats_pop.html', data=data, shannon=shannon)
+	return render_template('stats_pop.html', data=data, search_type=search_type, search_value=search_value, stats=hetero)
 
 
 # start the web server
