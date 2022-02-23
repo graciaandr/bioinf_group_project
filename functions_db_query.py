@@ -1,10 +1,11 @@
 import sqlite3, csv
 import pandas as pd
 import numpy as np
-import re
+import re, io , base64
 import allel as sc
-from math import floor, ceil, e
+from math import ceil
 from statistics import mean
+import matplotlib.pyplot as plt 
 
 
 # change genotype symbols to alphabet
@@ -223,6 +224,69 @@ def windowedHetDiv(df, pop, w = None):
         het_i = mean(het_vec[i:(i+w)]) # take mean of the exp. het. for chosen window
         het_divs_per_w.append(het_i)
     return het_divs_per_w
+
+
+######## plot distributions
+def get_shannon_plot(stats_df):
+    shannon_list = stats_df['GBR_shannon'].tolist()
+
+    plt.plot(shannon_list,  'r', markersize = 1)
+    plt.title('Sliding Window - Shannon Diversity Index')
+    plt.ylabel('Shannon Diversity')
+    plt.xlabel('Windows')
+    # encode
+    img = io.BytesIO()
+    plt.savefig(img, format='png')
+    img.seek(0)
+    plot_url = base64.b64encode(img.getvalue()).decode()
+    return plot_url
+
+
+
+
+
+############# fst
+def extract_and_makearray(df, pop):
+    AC_pop = [col for col in df.columns if pop in col]
+    AC_ref = [col for col in AC_pop if 'AC_ref' in col]
+    AC_alt = [col for col in AC_pop if 'AC_alt' in col]
+    AC_ref = ','.join(AC_ref)
+    AC_alt = ','.join(AC_alt)
+    df[AC_ref] = df[AC_ref].astype(str).astype(int)
+    df[AC_alt] = df[AC_alt].astype(str).astype(int)
+    # get ref and alt
+    allele_count = df[[AC_ref, AC_alt]]
+    # get number of variants 
+    total_variants = allele_count.shape[0]
+    allelecount_array = allele_count.to_numpy()
+    # reshape to n_varaints, n_alleles
+    reshape_alelle = allelecount_array.reshape(total_variants,2)
+    return reshape_alelle
+
+def calcFst(df, pop_list):
+    fst_dict = {}
+  # pass array for 2 pops
+    for i in range(0, len(pop_list)-1):
+        for j in range(i+1, len(pop_list)):
+            pop1_array = extract_and_makearray(df, pop_list[i])
+            pop2_array = extract_and_makearray(df, pop_list[j])
+            print(pop1_array)
+            print(pop2_array)
+            pop1,pop2= sc.hudson_fst(pop1_array, pop2_array)
+            fst = np.sum(pop1) / np.sum(pop2)
+            key = pop_list[i]  + "-" + pop_list[j]
+            value = fst
+            fst_dict[key] = value
+    fst_df = pd.DataFrame.from_dict(fst_dict, orient='index', columns=['fst'])
+    return (fst_df)
+
+
+
+
+
+
+
+
 
 
 # def select_pop(pop_list, data):
