@@ -28,14 +28,23 @@
 
     </form><br>
 
-    <h2>Statistics:</h2><a href="{{ url_for('download_file') }}">Download as txt file</a><br>
-    
-    <img src="/plot.png" alt="my plot">
+    <h2>Statistics:</h2><span class="tab"></span><a href="{{ url_for('download_file') }}">Download as txt file</a><br>
+    <br>
 
-    {% for table in tables %}
-        <!-- {{titles[loop.index]}} -->
+    <!-- fst table -->
+    {% if pop_list|length > 1 %}
+        {% for fst in fsts %}
+            {{ fst|safe }}
+        {% endfor %}
+    {% endif %}
+
+
+    <p>{{model_plot}}</p>
+
+<!-- stats_df table -->
+    <!-- {% for table in tables %}
         {{ table|safe }}
-    {% endfor %}
+    {% endfor %} -->
 
 
     <p style="font-weight: bold;"> Number of Results: {{data|length}} </p>

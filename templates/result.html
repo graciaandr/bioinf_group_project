@@ -6,48 +6,65 @@
 
 {% block content %}
     <link rel= "stylesheet" href= "{{ url_for('static',filename='css/style.css') }}">
-    <style>
-        .tab {
-            display: inline-block;
-            margin-left: 40px;
-        }
-    </style>
     <br><a href="/">back to home page</a><br><br>
+    Results for:
+    <p>{{search_type.upper()}}: {{search_value.upper()}}</p><br>
     {% if data|length > 1 %}
         <form action="/stats_pop_select" method="post">
+
             <h2>Summary Statistics:</h2>
-            <input type="checkbox" name="summarystats" value="shannon"> Shannon Diversity |
-            <span class="tab"></span><input type="checkbox" name="summarystats" value="hetero"> Heterozygosity |
-            <span class="tab"></span><input type="checkbox" name="summarystats" value="tajima"> Tajima D |
-            <br><br>
-            <h2>Choose populations:</h2>
+            <input type="checkbox" name="summarystats" value="shannon"> Shannon Diversity
+            <span class="tab"></span><input type="checkbox" name="summarystats" value="tajima"> Tajima D
+            <span class="tab"></span><input type="checkbox" name="summarystats" value="hetero"> Heterozygosity<br><br>
+
+            <h2>Choose population ancestry:</h2>
             <input type="text" name="search_type" value="{{ search_type }}" style="display: none;">
             <input type="text" name="search_value" value="{{ search_value }}" style="display: none;">
-            <input type="checkbox" name="population" value="GBR"> British (European Ancestry) | <br>
-            <input type="checkbox" name="population" value="LWK"> Luhya (African Ancestry) | <br>
-            <input type="checkbox" name="population" value="MXL"> Mexican (American Ancestry) | <br>
-            <input type="checkbox" name="population" value="CDX"> Dai Chinese (East Asian Ancestry) | <br>
-            <input type="checkbox" name="population" value="GIH"> Gujarati (South Asian Ancestry) |
-            <br><br>
+            <input type="checkbox" name="population" value="GBR"> European - British (GBR) <br>
+            <input type="checkbox" name="population" value="LWK"> African - Luhya (LWK) <br>
+            <input type="checkbox" name="population" value="MXL"> American - Mexican (MXL) <br>
+            <input type="checkbox" name="population" value="CDX"> East Asian - Dai Chinese (CDX) <br>
+            <input type="checkbox" name="population" value="GIH"> South Asian - Gujarati (GIH) <br><br>
             <input type="submit" value="Calculate">
+
         </form><br>
         <p style="font-weight: bold;"> Number of Results: {{data|length}} </p>
         <table style="width:100%">
+            <col>
+            <colgroup span="4"></colgroup>
             <tr>
-                <th>Position</th>
-                <th>rs ID</th>
-                <th>REF</th>
-                <th>ALT</th>
-                <th>Gene</th>
-                <th>Gene Alias</th>
+                <th rowspan="2">Position</th>
+                <th rowspan="2">rs ID</th>
+                <th rowspan="2">Gene Name</th>
+                <th rowspan="2">REF</th>
+                <th rowspan="2">ALT</th>
+                <th colspan="4" scope="colgroup">GBR</th>
+                <th colspan="4" scope="colgroup">LWK</th>
+                <th colspan="4" scope="colgroup">MXL</th>
+                <th colspan="4" scope="colgroup">CDX</th>
+                <th colspan="4" scope="colgroup">GIH</th>
+                <th rowspan="2">Gene Alias</th>
+            </tr>
+            <tr>
+                <th scope="col">AF</th><th scope="col">GT0/0</th><th scope="col">GT0/1</th><th scope="col">GT1/1</th>
+                <th scope="col">AF</th><th scope="col">GT0/0</th><th scope="col">GT0/1</th><th scope="col">GT1/1</th>
+                <th scope="col">AF</th><th scope="col">GT0/0</th><th scope="col">GT0/1</th><th scope="col">GT1/1</th>
+                <th scope="col">AF</th><th scope="col">GT0/0</th><th scope="col">GT0/1</th><th scope="col">GT1/1</th>
+                <th scope="col">AF</th><th scope="col">GT0/0</th><th scope="col">GT0/1</th><th scope="col">GT1/1</th>
             </tr>
             {% for value in data %}
                 <tr>
-                    <td>{{value[2]}}</td>
-                    <td>{{value[3]}}</td>
-                    <td>{{value[4]}}</td>
-                    <td>{{value[5]}}</td>
-                    <td>{{value[7]}}</td>
+                    <td>{{value[2]}}</td><td>{{value[3]}}</td><td>{{value[7]}}</td><td>{{value[4]}}</td> <td>{{value[5]}}</td>
+                    <td>{{value[31]}}</td><td>{{value[34]}}</td><td>{{value[35]}}</td><td>{{value[36]}}</td>
+                    <td>{{value[24]}}</td><td>{{value[27]}}</td><td>{{value[28]}}</td><td>{{value[29]}}</td>
+                    <td>{{value[10]}}</td><td>{{value[13]}}</td><td>{{value[14]}}</td><td>{{value[15]}}</td>
+                    <td>{{value[17]}}</td><td>{{value[20]}}</td><td>{{value[21]}}</td><td>{{value[22]}}</td>
+                    <td>{{value[38]}}</td><td>{{value[41]}}</td><td>{{value[42]}}</td><td>{{value[43]}}</td>
+
+                    <!-- <td>{{value[24]}}</td>
+                    <td>{{value[10]}}</td>
+                    <td>{{value[17]}}</td>
+                    <td>{{value[38]}}</td> -->
                     <td>{{value[44]}}</td>
                 </tr>
             {% endfor %}
