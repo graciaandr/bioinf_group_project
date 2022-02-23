@@ -1,12 +1,12 @@
-from asyncio.proactor_events import _ProactorSocketTransport
-from cgitb import reset
-from os import stat
-from re import search
-from flask import Flask, render_template, redirect, request, url_for, session
+from flask import Flask, render_template, redirect, request, url_for, send_file, Response
 from flask_bootstrap import Bootstrap
 import pandas as pd
 import functions_db_query as dbq
 
+import io, random
+import matplotlib.pyplot as plt 
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from matplotlib.figure import Figure
 
 # create a flask application object
 app = Flask(__name__)
@@ -14,7 +14,6 @@ app = Flask(__name__)
 # flask_wft requires encryption key
 app.config['SECRET_KEY'] = 'chromosome22'
 Bootstrap(app)
-
 
 # search form in home page
 @app.route('/', methods=['GET','POST'])
@@ -29,8 +28,6 @@ def index():
 @app.route('/search/<search_type>/<search_value>', methods = ['GET'])
 def search(search_type, search_value):
 	data = dbq.search_db(search_type, search_value)
-	# data_df = dbq.to_df(data)
-	# df_cols = data_df.columns
 	return render_template('result.html', data=data, search_type=search_type, search_value=search_value)
 
 # select statistics and populations form
@@ -42,51 +39,31 @@ def stats_pop():
 	pop_list = request.form.getlist("population")
 	stats_list = request.form.getlist("summarystats")
 	data_df = dbq.to_df(data) # put data into dataframe for stats
-	stats_df = pd.DataFrame({'Population' : pop_list})
-	
-	# for pop in pop_list:
-	# 	stats_df = pd.DataFrame({'population' : pop_list})
-	# 	stats_list = []
-	# 	stats = dbq.calc_stats(data_df, stats_list, pop)
-	# 	print(stats)
+	stats_df = dbq.calc_stats(data_df, stats_list, pop_list)
+	# stats_df.to_csv('stats.txt', sep=',', index=False, header=True)
+	return render_template('stats_pop.html', data=data, search_type=search_type, search_value=search_value,
+							tables=[stats_df.to_html(classes='data')], titles=stats_df.columns.values)
 
-	if 'shannon' in stats_list:
-		shannon_df = pd.DataFrame({'pop' : pop_list}) # make df for shannon value per population
-		shannon_list = []
-		for pop in pop_list: # loop to get shannon per pop
-			shannon = dbq.calcShannonDiv(data_df, pop)
-			shannon_list.append(shannon)
-		shannon_df["shannon"] = shannon_list # input shannon values into df
-		shannon = shannon_df.to_numpy() # df to list of tuples for html
-		print(shannon)
+# download txt file
+@app.route('/download')
+def download_file():
+	path = "stats.txt"
+	return send_file(path, as_attachment=True)
 
-	elif 'tajima' in stats_list:
-		tajima_df = pd.DataFrame({'pop' : pop_list})
-		tajima_list = []
-		for pop in pop_list:
-			tajima = dbq.calcTajimaD(data_df, pop)
-			tajima_list.append(tajima)
-		tajima_df["tajima"] = tajima_list
-		tajima = tajima_df.to_numpy()
-		print (tajima)
-	
-	elif 'hetero' in stats_list:
-		hetero_df = pd.DataFrame({'pop' : pop_list})
-		hetero_list = []
-		for pop in pop_list:
-			hetero = dbq.windowedHetDiv(data_df, pop)
-			hetero_list.append(hetero)
-		hetero_df["heterozygosity"] = hetero_list
-		hetero = hetero_df.to_numpy()
-		print(hetero)
+@app.route('/plot.png')
+def plot_png():
+    fig = create_figure()
+    output = io.BytesIO()
+    FigureCanvas(fig).print_png(output)
+    return Response(output.getvalue(), mimetype='image/png')
 
-	else:
-		shannon="Choose statistics to calculate"
-
-
-
-	return render_template('stats_pop.html', data=data, search_type=search_type, search_value=search_value, stats=hetero)
-
+def create_figure():
+	fig = Figure()
+	axis = fig.add_subplot(1, 1, 1)
+	xs = range(100)
+	ys = [random.randint(1, 50) for x in xs]
+	axis.plot(xs, ys)
+	return fig
 
 # start the web server
 if __name__ == '__main__':
