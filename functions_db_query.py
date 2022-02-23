@@ -69,11 +69,6 @@ def use_gene(search_value):
         result = cursor.execute(f"""SELECT * FROM snp_table WHERE GENE = '{search_value}'
                                     OR GENE_ALIAS LIKE '%{search_value}%'
                                     """).fetchall()
-# SELECT * FROM mytable
-# WHERE column1 LIKE '%word1%'
-#    OR column1 LIKE '%word2%'
-# SELECT * FROM snp_table WHERE GENE_ALIAS LIKE '{search_value}'
-        # result = cursor.execute(f"SELECT * FROM snp_table WHERE GENE = '{search_value}'").fetchall()
     return result
 
 def use_pos(search_value):
@@ -92,16 +87,16 @@ def use_pos(search_value):
         else:
             return "Enter a valid position range" #invalid input
 
+
 def search_db(search_type, search_value):
     if search_type == "snp_id":
         return use_id(search_value)
     elif search_type == "gene_name":
         return use_gene(search_value)
-    elif search_type == "pos_numbers":
+    elif search_type == "position":
         return use_pos(search_value)
     else:
         return "404: Not Found"
-
 
 
 ################ statistics ################
@@ -120,16 +115,22 @@ def to_df(data): # data is list of tuples
     data = pd.DataFrame(data, columns=col_list)
     return data
 
-# make a new dataframe for stats???
-def calc_stats(df, stats_list, pop):
-    if 'shannon' in stats_list:
-        return calcShannonDiv(df, pop)
-    elif 'tajima' in stats_list:
-        return calcTajimaD(df, pop)
-    elif 'hetero' in stats_list:
-        return calcHeterozygosity(df, pop)
-    else:
-        pass
+# make a new dataframe for stats
+def calc_stats(df, stats_list, pop_list):
+    stats_df = pd.DataFrame()
+    for pop in pop_list:
+        for stats in stats_list:
+            if stats == 'shannon':
+                shannon = windowedShannonDiv(df, pop)
+                stats_df[pop+'_shannon']=shannon
+            elif stats == 'tajima':
+                tajima = windowedTajimasD(df, pop)
+                stats_df[pop+'_tajima']=tajima
+            elif stats == 'hetero':
+                # hetero = calcHeterozygosity(df, pop)
+                heterow = windowedHetDiv(df, pop)
+                stats_df[pop+"_hetero"] = heterow
+    return stats_df
 
 
 
@@ -146,8 +147,6 @@ def calcShannonDiv(df, pop):
     shannondiv = df['shannon'].sum() * -1 # calculate sum and multiply with -1 to get shannon diversity
     df.drop(['norm_alt', 'ln_alt'], axis=1, inplace=True)
     return(shannondiv)
-
-
 # Tajima's D
 def calcTajimaD(df, pop):
     AC_pop = [col for col in df.columns if pop in col] # filter population
@@ -160,8 +159,6 @@ def calcTajimaD(df, pop):
     arr = (df[[AC_ref, AC_alt]]).to_numpy() # take allele counts and save as numpy array
     taj = sc.allel.tajima_d(arr) # calculate tajima's D using scikit-allel function
     return (taj)
-
-
 # heterozygosity
 def calcHeterozygosity(df, pop):
     AF_pop = [col for col in df.columns if pop in col] # filter population
@@ -226,11 +223,6 @@ def windowedHetDiv(df, pop, w = None):
         het_i = mean(het_vec[i:(i+w)]) # take mean of the exp. het. for chosen window
         het_divs_per_w.append(het_i)
     return het_divs_per_w
-
-
-
-
-
 
 
 # def select_pop(pop_list, data):
