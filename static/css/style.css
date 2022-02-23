@@ -8,14 +8,29 @@ table {
     color: black;
   }
 th {
-    height: 50px;
+    height: 35px;
     border: 2px solid;
     border-bottom: 3px solid ;
     text-align: center;
 }
+
+/* th {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: white;
+    border-bottom: 3px solid;
+} */
+
 td {
     height: 35px;
     border: 2px solid ;
+}
+
+.tab {
+    display: inline-block;
+    margin-left: 60px;
 }
 
 h1 {
