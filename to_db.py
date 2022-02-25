@@ -90,9 +90,10 @@ cursor.execute("""CREATE TABLE snp_table (unique_SNP_ID,CHROM,POS,rsID,REF,ALT,I
                 CDX_AF_ref,CDX_AF_alt,CDX_AC_ref,CDX_AC_alt,CDX_GT00,CDX_GT0110,CDX_GT11,
                 LWK_AF_ref,LWK_AF_alt,LWK_AC_ref,LWK_AC_alt,LWK_GT00,LWK_GT0110,LWK_GT11,
                 GBR_AF_ref,GBR_AF_alt,GBR_AC_ref,GBR_AC_alt,GBR_GT00,GBR_GT0110,GBR_GT11,
-                GIH_AF_ref,GIH_AF_alt,GIH_AC_ref,GIH_AC_alt,GIH_GT00,GIH_GT0110,GIH_GT11,GENE_ALIAS, 
+                GIH_AF_ref,GIH_AF_alt,GIH_AC_ref,GIH_AC_alt,GIH_GT00,GIH_GT0110,GIH_GT11,GENE_ALIAS,
+                Ancestral_Allele,AA_AF,Derived_Allele,DA_AF,
                 PRIMARY KEY (unique_SNP_ID));""")
-dbq.insert_table('final_complete_SNP_table.csv', 'chromosome22_snps.db', 'snp_table')
+dbq.insert_table('SNP_data_derived_AF.csv', 'chromosome22_snps.db', 'snp_table')
 
 con.commit()
 con.close()
