@@ -1,3 +1,4 @@
+from os import stat
 import sqlite3, csv
 import pandas as pd
 import numpy as np
@@ -227,22 +228,78 @@ def windowedHetDiv(df, pop, w = None):
 
 
 ######## plot distributions
-def get_shannon_plot(stats_df):
-    shannon_list = stats_df['GBR_shannon'].tolist()
+# def get_plot(stats_df, pop, stats):
+#     if stats == 'shannon':
+#         return get_shannon_plot(stats_df, pop)
+#     elif stats == 'tajima':
+#         return get_tajima_plot(stats_df, pop)
+#     elif stats == 'hetero':
+#         return get_hetero_plot(stats_df, pop)
 
-    plt.plot(shannon_list,  'r', markersize = 1)
-    plt.title('Sliding Window - Shannon Diversity Index')
-    plt.ylabel('Shannon Diversity')
+def get_plot(stats_df, pop_list, stats):
+    if stats == 'shannon':
+        return get_shannon_plot(stats_df, pop_list)
+    elif stats == 'tajima':
+        return get_tajima_plot(stats_df, pop_list)
+    elif stats == 'hetero':
+        return get_hetero_plot(stats_df, pop_list)
+
+def get_shannon_plot(stats_df, pop_list):
+    for pop in pop_list:
+        shan_list = stats_df[pop+'_shannon'].tolist()
+        plt.plot(shan_list,  'r', markersize = 1)
+        plt.title('Sliding Window - Shannon Diversity Index')
+        plt.ylabel('Shannon Diversity')
+        plt.xlabel('Windows')
+        # encode
+        img = io.BytesIO()
+        plt.savefig(img, format='png')
+        img.seek(0)
+        plot_url = base64.b64encode(img.getvalue()).decode()
+    plt.close('all') ### closing the plot window
+    return plot_url
+    
+# def get_shannon_plot(stats_df, pop):
+#     shan_list = stats_df[pop+'_shannon'].tolist()
+#     plt.plot(shan_list,  'r', markersize = 1)
+#     plt.title('Sliding Window - Shannon Diversity Index')
+#     plt.ylabel('Shannon Diversity')
+#     plt.xlabel('Windows')
+#     # encode
+#     img = io.BytesIO()
+#     plt.savefig(img, format='png')
+#     img.seek(0)
+#     plot_url = base64.b64encode(img.getvalue()).decode()
+#     plt.close('all') ### closing the plot window?
+#     return plot_url
+
+def get_tajima_plot(stats_df, pop):
+    taj_list = stats_df[pop+'_tajima'].tolist()
+    plt.plot(taj_list,  'g', markersize = 1)
+    plt.title("Sliding Window - Tajima's D")
+    plt.ylabel("Tajima's D")
     plt.xlabel('Windows')
     # encode
     img = io.BytesIO()
     plt.savefig(img, format='png')
     img.seek(0)
     plot_url = base64.b64encode(img.getvalue()).decode()
+    plt.close('all') ### closing the plot window?
     return plot_url
 
-
-
+def get_hetero_plot(stats_df, pop):
+    het_list = stats_df[pop+'_hetero'].tolist()
+    plt.plot(het_list,  'b', markersize = 1)
+    plt.title('Sliding Window - Heterozygosity Diversity Index')
+    plt.ylabel('Heteozygosity Diversity')
+    plt.xlabel('Windows')
+    # encode
+    img = io.BytesIO()
+    plt.savefig(img, format='png')
+    img.seek(0)
+    plot_url = base64.b64encode(img.getvalue()).decode()
+    plt.close('all') ### closing the plot window?
+    return plot_url
 
 
 ############# fst
@@ -270,8 +327,6 @@ def calcFst(df, pop_list):
         for j in range(i+1, len(pop_list)):
             pop1_array = extract_and_makearray(df, pop_list[i])
             pop2_array = extract_and_makearray(df, pop_list[j])
-            print(pop1_array)
-            print(pop2_array)
             pop1,pop2= sc.hudson_fst(pop1_array, pop2_array)
             fst = np.sum(pop1) / np.sum(pop2)
             key = pop_list[i]  + "-" + pop_list[j]

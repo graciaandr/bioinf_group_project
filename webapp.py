@@ -7,7 +7,7 @@ import functions_db_query as dbq
 import io, random
 import matplotlib.pyplot as plt 
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-from matplotlib.figure import Figure
+
 
 plt.switch_backend('Agg')
 
@@ -38,23 +38,29 @@ def search(search_type, search_value):
 def stats_pop():
 	search_type = request.form["search_type"]
 	search_value = request.form["search_value"]
+
 	data = dbq.search_db(search_type, search_value) # data from db in list of tuples
 	pop_list = request.form.getlist("population")
 	stats_list = request.form.getlist("summarystats")
+
 	data_df = dbq.to_df(data) # put data into dataframe for stats
 	stats_df = dbq.calc_stats(data_df, stats_list, pop_list)
 	stats_df.to_csv('stats.txt', sep=',', index=False, header=True)
 	fst_df = dbq.calcFst(data_df, pop_list)
+	fst_df.to_csv('fst.txt', sep=',', index=True, header=True)
 
-	model_plot=''
-	if "shannon" in stats_list:
-		plot_url = dbq.get_shannon_plot(stats_df)
-		model_plot = Markup('<img src="data:image/png;base64,{}" width: 360px; height: 288px>'.format(plot_url))
-	
-	
+	model_plot = []
+	for stats in stats_list:
+		plot_url = dbq.get_plot(stats_df, pop_list, stats)
+		# print(plot_url)
+		plot = Markup('<img src="data:image/png;base64,{}" width: 360px; height: 288px>'.format(plot_url))
+		model_plot.append(plot)
+		# model_plot["plot_{0}".format(stats)] = plot
+	# print(len(model_plot))
 	return render_template('stats_pop.html', data=data, search_type=search_type, search_value=search_value,
+							pop_list=pop_list, stats_list=stats_list,
 							tables=[stats_df.to_html(classes='data')], fsts=[fst_df.to_html(classes='data')],
-							model_plot=model_plot)
+						 	model_plot=model_plot)
 
 # download txt file
 @app.route('/download')
