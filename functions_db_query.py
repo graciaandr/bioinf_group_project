@@ -242,82 +242,72 @@ def windowedHetDiv(df, pop, w = None):
     return het_divs_per_w
 
 
-######## plot distributions
-def summary_stats_plot (stats_list, stats_df, pop_list):
-    all_plots = []
-    for stats in stats_list:
-        plot_url = get_plot(stats_df, pop_list, stats)
-        plot = Markup('<img src="data:image/png;base64,{}" width')
-        
-
-def get_plot(stats_df, pop_list, stats):
-    if stats == 'shannon':
-        return get_shannon_plot(stats_df, pop_list)
-    elif stats == 'tajima':
-        return get_tajima_plot(stats_df, pop_list)
-    elif stats == 'hetero':
-        return get_hetero_plot(stats_df, pop_list)
-
-def get_shannon_plot(stats_df, pop_list):
+######## plot distributions       
+def shannon_plot(stats_df, pop_list):
     for pop in pop_list:
         shan_list = stats_df[pop+'_shannon'].tolist()
         plt.plot(shan_list, markersize = 1, label=pop)
         plt.legend()
     plt.title('Sliding Window - Shannon Diversity Index')
     plt.ylabel('Shannon Diversity')
-    plt.xlabel('Windows')
+    plt.xlabel('Genomic Coordinate')
         # encode
     img = io.BytesIO()
     plt.savefig(img, format='png')
     img.seek(0)
     plot_url = base64.b64encode(img.getvalue()).decode()
-    plt.close('all') ### closing the plot window
+    plt.close('all')
     return plot_url
-    
-# def get_shannon_plot(stats_df, pop):
-#     shan_list = stats_df[pop+'_shannon'].tolist()
-#     plt.plot(shan_list,  'r', markersize = 1)
-#     plt.title('Sliding Window - Shannon Diversity Index')
-#     plt.ylabel('Shannon Diversity')
-#     plt.xlabel('Windows')
-#     # encode
-#     img = io.BytesIO()
-#     plt.savefig(img, format='png')
-#     img.seek(0)
-#     plot_url = base64.b64encode(img.getvalue()).decode()
-#     plt.close('all') ### closing the plot window?
-#     return plot_url
 
-def get_tajima_plot(stats_df, pop_list):
+def tajima_plot(stats_df, pop_list):
     for pop in pop_list:
         taj_list = stats_df[pop+'_tajima'].tolist()
-        plt.plot(taj_list, markersize = 1)
-        plt.title("Sliding Window - Tajima's D")
-        plt.ylabel("Tajima's D")
-        plt.xlabel('Windows')
-        # encode
-        img = io.BytesIO()
-        plt.savefig(img, format='png')
-        img.seek(0)
-        plot_url = base64.b64encode(img.getvalue()).decode()
-    plt.close('all') ### closing the plot window
+        plt.plot(taj_list, markersize = 1, label=pop)
+        plt.legend()
+    plt.title("Sliding Window - Tajima's D")
+    plt.ylabel("Tajima's D")
+    plt.xlabel('Genomic Coordinate')
+    # encode
+    img = io.BytesIO()
+    plt.savefig(img, format='png')
+    img.seek(0)
+    plot_url = base64.b64encode(img.getvalue()).decode()
+    plt.close('all')
     return plot_url
 
-def get_hetero_plot(stats_df, pop_list):
+def hetero_plot(stats_df, pop_list):
     for pop in pop_list:
         het_list = stats_df[pop+'_hetero'].tolist()
-        plt.plot(het_list, markersize = 1)
-        plt.title('Sliding Window - Heterozygosity Diversity Index')
-        plt.ylabel('Heteozygosity Diversity')
-        plt.xlabel('Windows')
-        # encode
-        img = io.BytesIO()
-        plt.savefig(img, format='png')
-        img.seek(0)
-        plot_url = base64.b64encode(img.getvalue()).decode()
-    plt.close('all') ### closing the plot window?
+        # print(het_list)
+        plt.plot(het_list, markersize = 1, label=pop)
+        plt.legend()
+    plt.title('Sliding Window - Heterozygosity Diversity Index')
+    plt.ylabel('Heteozygosity Diversity')
+    plt.xlabel('Genomic Coordinate')
+    # encode
+    img = io.BytesIO()
+    plt.savefig(img, format='png')
+    img.seek(0)
+    plot_url = base64.b64encode(img.getvalue()).decode()
+    plt.close('all')
     return plot_url
 
+def get_plot(stats_df, pop_list, stats):
+    if stats == 'shannon':
+        return shannon_plot(stats_df, pop_list)
+    elif stats == 'tajima':
+        return tajima_plot(stats_df, pop_list)
+    elif stats == 'hetero':
+        return hetero_plot(stats_df, pop_list)
+
+# save summary statistics plots into variable
+def summary_stats_plot (stats_df, stats_list, pop_list):
+    all_plots = []
+    for stats in stats_list:
+        plot_url = get_plot(stats_df, pop_list, stats)
+        plot = Markup('<img src="data:image/png;base64,{}" width: 360px; height: 288px>'.format(plot_url))
+        all_plots.append(plot)
+    return all_plots
 
 ############# fst
 def extract_and_makearray(df, pop):

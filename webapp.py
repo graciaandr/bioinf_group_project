@@ -1,10 +1,8 @@
-from flask import Flask, render_template, redirect, request, url_for, send_file, Response
+from flask import Flask, render_template, redirect, request, url_for, send_file
 from flask_bootstrap import Bootstrap
 from markupsafe import Markup
 import pandas as pd
 import functions_db_query as dbq
-
-import io, random
 import matplotlib.pyplot as plt 
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
@@ -45,27 +43,27 @@ def stats_pop():
 
 	data_df = dbq.to_df(data) # put data into dataframe for stats
 	stats_df = dbq.calc_stats(data_df, stats_list, pop_list)
-	stats_df.to_csv('stats.txt', sep=',', index=False, header=True)
-	fst_df = dbq.calcFst(data_df, pop_list)
-	fst_df.to_csv('fst.txt', sep=',', index=True, header=True)
+	stats_df.to_csv('statistics_data.txt', sep=',', index=False, header=True)
 
-	model_plot = []
-	for stats in stats_list:
-		plot_url = dbq.get_plot(stats_df, pop_list, stats)
-		# print(plot_url)
-		plot = Markup('<img src="data:image/png;base64,{}" width: 360px; height: 288px>'.format(plot_url))
-		model_plot.append(plot)
-		# model_plot["plot_{0}".format(stats)] = plot
-	# print(len(model_plot))
+	fst_df = dbq.calcFst(data_df, pop_list)
+	fst_df.to_csv('fst_data.txt', sep=',', index=True, header=True)
+
+	model_plot = dbq.summary_stats_plot(stats_df, stats_list, pop_list)
+
 	return render_template('stats_pop.html', data=data, search_type=search_type, search_value=search_value,
 							pop_list=pop_list, stats_list=stats_list,
 							tables=[stats_df.to_html(classes='data')], fsts=[fst_df.to_html(classes='data')],
 						 	model_plot=model_plot)
 
 # download txt file
-@app.route('/download')
-def download_file():
-	path = "stats.txt"
+@app.route('/download_statistics')
+def download_stats():
+	path = "statistics_data.txt"
+	return send_file(path, as_attachment=True)
+
+@app.route('/download_fst')
+def download_fst():
+	path = "fst_data.txt"
 	return send_file(path, as_attachment=True)
 
 
