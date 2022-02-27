@@ -7,12 +7,18 @@
 {% block content %}
     <link rel= "stylesheet" href= "{{ url_for('static',filename='css/style.css') }}">
     <h1>Welcome to SNPs Portal</h1>
+    <p>The aim of the website is to provide researchers with a tool to investigate the effect of different evolutionary processes, 
+        such as genetic drift and natural selection on genetic variation within population using Shannon Diversity index, Tajima’s D and Expected hHeterozygosity, 
+        as well as, measure the genetic differentiation between populations indicated by the FST statistic. The output of results would depends on SNPs, 
+        genes and chromosomal region of interest, and could be applied for human population genetic studies studying disease resistance.
+    </p><br>
+    <p><b>Select:</b></p>
     <form method="post" action="/">
         <input type="radio" name="search_type" value="snp_id" checked> SNP ID
         <br>
         <input type="radio" name="search_type" value="gene_name"> Gene Name
         <br>
-        <input type="radio" name="search_type" value="pos_numbers"> Genomic Coordinate
+        <input type="radio" name="search_type" value="position"> Genomic Coordinate
         <br><br>
         <input type="text" name="search_value" >
         <input type="submit" value="Search">

@@ -9,9 +9,9 @@
     <br><a href="/">back to home page</a><br><br>
     Results for:
     <p>{{search_type.upper()}}: {{search_value.upper()}}</p><br>
+
     {% if data|length > 1 %}
         <form action="/stats_pop_select" method="post">
-
             <h2>Summary Statistics:</h2>
             <input type="checkbox" name="summarystats" value="shannon"> Shannon Diversity
             <span class="tab"></span><input type="checkbox" name="summarystats" value="tajima"> Tajima D
@@ -26,8 +26,9 @@
             <input type="checkbox" name="population" value="CDX"> East Asian - Dai Chinese (CDX) <br>
             <input type="checkbox" name="population" value="GIH"> South Asian - Gujarati (GIH) <br><br>
             <input type="submit" value="Calculate">
-
+            <br><br>
         </form><br>
+        
         <p style="font-weight: bold;"> Number of Results: {{data|length}} </p>
         <table style="width:100%">
             <col>

@@ -8,8 +8,7 @@
     <link rel= "stylesheet" href= "{{ url_for('static',filename='css/style.css') }}">
    <br><a href="/">back to home page</a><br><br>
    <h2>Results for: {{search_type}}: {{search_value}}</h2><br>
-    <form action="/stats_pop_select" method="post">
-
+   <form action="/stats_pop_select" method="post">
         <h2>Summary Statistics:</h2>
         <input type="checkbox" name="summarystats" value="shannon"> Shannon Diversity
         <span class="tab"></span><input type="checkbox" name="summarystats" value="tajima"> Tajima D
@@ -25,26 +24,33 @@
         <input type="checkbox" name="population" value="GIH"> South Asian - Gujarati (GIH) <br><br>
         <input type="submit" value="Calculate">
         <br><br>
-
     </form><br>
 
-    <h2>Statistics:</h2><span class="tab"></span><a href="{{ url_for('download_file') }}">Download as txt file</a><br>
+    <h2>Statistics:</h2><span class="tab"></span><a href="{{ url_for('download_stats') }}">Download as txt file</a><br>
     <br>
 
     <!-- fst table -->
     {% if pop_list|length > 1 %}
+        <a href="{{ url_for('download_fst') }}">Download fst file</a>
         {% for fst in fsts %}
             {{ fst|safe }}
         {% endfor %}
     {% endif %}
 
+    <!-- plots -->
+    <p>
+        {% for value in model_plot %}
+            {{value}}
+        {% endfor %}
 
-    <p>{{model_plot}}</p>
+    </p>
 
 <!-- stats_df table -->
-    <!-- {% for table in tables %}
-        {{ table|safe }}
-    {% endfor %} -->
+    {% if stats_list|length > 0 %}
+        {% for table in tables %}
+            {{ table|safe }}
+        {% endfor %}
+    {% endif %}
 
 
     <p style="font-weight: bold;"> Number of Results: {{data|length}} </p>
