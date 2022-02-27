@@ -132,19 +132,18 @@ def calc_stats(df, stats_list, pop_list):
                 # hetero = calcHeterozygosity(df, pop)
                 heterow = windowedHetDiv(df, pop)
                 stats_df[pop+"_hetero"] = heterow
-
-
-# GRACIA
+    
+    print(stats_df)
     # add positions for x-axis of distribution plot 
-    # pos_per_w = []
-    # n = df.shape[0]
-    # w = ceil(n/10)
-    # for i in range(0, n-w+1):
-    #     # take median position of the window
-    #     pos_i = median(df['POS'][i:(i+w)]) # maybe need to round up? 
-    #     pos_per_w.append(pos_i)
-    # stats_df['positions'] = pos_per_w
-
+    pos_per_w = []
+    n = df.shape[0]
+    w = ceil(n/10)
+    for i in range(0, n-w+1):
+        # take median position of the window
+        pos_i = median(df['POS'][i:(i+w)]) # maybe need to round up? 
+        pos_per_w.append(pos_i)
+    stats_df['positions'] = pos_per_w
+    print(stats_df)
 
     return stats_df
 
@@ -226,7 +225,8 @@ def windowedTajimasD(df, pop, w = None):
         ac_window = arr[i:i+w] # set window of allele counts array
         D_i = sc.allel.tajima_d(ac_window)
         wind_tajd.append(D_i)
-    # wind_tajd = np.nan_to_num(wind_tajd) # GRACIA
+    # change na to 0
+    wind_tajd = np.nan_to_num(wind_tajd)
     return(wind_tajd)
 
 def windowedHetDiv(df, pop, w = None):
@@ -246,12 +246,12 @@ def windowedHetDiv(df, pop, w = None):
 def shannon_plot(stats_df, pop_list):
     for pop in pop_list:
         shan_list = stats_df[pop+'_shannon'].tolist()
-        plt.plot(shan_list, markersize = 1, label=pop)
+        plt.plot(stats_df['positions'], shan_list, markersize = 1, label=pop)
         plt.legend()
     plt.title('Sliding Window - Shannon Diversity Index')
     plt.ylabel('Shannon Diversity')
     plt.xlabel('Genomic Coordinate')
-        # encode
+    # encode
     img = io.BytesIO()
     plt.savefig(img, format='png')
     img.seek(0)
@@ -262,7 +262,7 @@ def shannon_plot(stats_df, pop_list):
 def tajima_plot(stats_df, pop_list):
     for pop in pop_list:
         taj_list = stats_df[pop+'_tajima'].tolist()
-        plt.plot(taj_list, markersize = 1, label=pop)
+        plt.plot(stats_df['positions'],taj_list, markersize = 1, label=pop)
         plt.legend()
     plt.title("Sliding Window - Tajima's D")
     plt.ylabel("Tajima's D")
@@ -279,7 +279,7 @@ def hetero_plot(stats_df, pop_list):
     for pop in pop_list:
         het_list = stats_df[pop+'_hetero'].tolist()
         # print(het_list)
-        plt.plot(het_list, markersize = 1, label=pop)
+        plt.plot(stats_df['positions'], het_list, markersize = 1, label=pop)
         plt.legend()
     plt.title('Sliding Window - Heterozygosity Diversity Index')
     plt.ylabel('Heteozygosity Diversity')
@@ -305,7 +305,7 @@ def summary_stats_plot (stats_df, stats_list, pop_list):
     all_plots = []
     for stats in stats_list:
         plot_url = get_plot(stats_df, pop_list, stats)
-        plot = Markup('<img src="data:image/png;base64,{}" width: 360px; height: 288px>'.format(plot_url))
+        plot = Markup('<img src="data:image/png;base64,{}" width: 1000px; height: 288px>'.format(plot_url))
         all_plots.append(plot)
     return all_plots
 
@@ -336,14 +336,11 @@ def calcFst(df, pop_list):
             pop2_array = extract_and_makearray(df, pop_list[j])
             pop1,pop2= sc.hudson_fst(pop1_array, pop2_array)
             fst = np.sum(pop1) / np.sum(pop2)
-            print(fst)
             key = pop_list[i]  + "-" + pop_list[j]
-            print(key)
             value = fst
             fst_dict[key] = value
-            
-    fst_df = pd.DataFrame.from_dict(fst_dict, orient='index', columns=['fst'])
-    print(fst_df)
+    fst_df = pd.DataFrame(fst_dict.items(), columns=['Population Pairs', 'FST'])
+    # fst_df = pd.DataFrame.from_dict(fst_dict, orient='index', columns=['fst'])
     return (fst_df)
 
 
