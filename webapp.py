@@ -45,13 +45,15 @@ def stats_pop():
 	stats_df = dbq.calc_stats(data_df, stats_list, pop_list)
 	stats_df.to_csv('statistics_data.txt', sep=',', index=False, header=True)
 
-	fst_df = dbq.calcFst(data_df, pop_list)
-	fst_df.to_csv('fst_data.txt', sep=',', index=False, header=True)
+	fst_df, heatmap = dbq.calcFst(data_df, pop_list)
+	fst_df.to_csv('fst_data.txt', sep=',', index=True, header=True, index_label="FST")
+
 	model_plot = dbq.summary_stats_plot(stats_df, stats_list, pop_list)
+
 	return render_template('stats_pop.html', data=data, search_type=search_type, search_value=search_value,
 							pop_list=pop_list, stats_list=stats_list,
-							tables=[stats_df.to_html(classes='data', index=False)], fsts=[fst_df.to_html(classes='data', index=False)],
-						 	model_plot=model_plot)
+							tables=[stats_df.to_html(classes='data', index=False)], fsts=[fst_df.to_html(classes='data', index=True)],
+						 	model_plot=model_plot, heatmap=heatmap)
 
 # download txt file
 @app.route('/download_statistics')

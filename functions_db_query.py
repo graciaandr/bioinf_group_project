@@ -6,7 +6,8 @@ import re, io , base64
 import allel as sc
 from math import ceil
 from statistics import mean, median
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
+import seaborn as sb
 
 
 # change genotype symbols to alphabet
@@ -132,8 +133,6 @@ def calc_stats(df, stats_list, pop_list):
                 # hetero = calcHeterozygosity(df, pop)
                 heterow = windowedHetDiv(df, pop)
                 stats_df[pop+"_hetero"] = heterow
-    
-    print(stats_df)
     # add positions for x-axis of distribution plot 
     pos_per_w = []
     n = df.shape[0]
@@ -143,8 +142,6 @@ def calc_stats(df, stats_list, pop_list):
         pos_i = median(df['POS'][i:(i+w)]) # maybe need to round up? 
         pos_per_w.append(pos_i)
     stats_df['positions'] = pos_per_w
-    print(stats_df)
-
     return stats_df
 
 
@@ -309,41 +306,68 @@ def summary_stats_plot (stats_df, stats_list, pop_list):
         all_plots.append(plot)
     return all_plots
 
+
+
+
 ############# fst
 def extract_and_makearray(df, pop):
+    # filter allele count columns of chosen population(s)
     AC_pop = [col for col in df.columns if pop in col]
     AC_ref = [col for col in AC_pop if 'AC_ref' in col]
     AC_alt = [col for col in AC_pop if 'AC_alt' in col]
     AC_ref = ','.join(AC_ref)
     AC_alt = ','.join(AC_alt)
+    # columns values need to be integers
     df[AC_ref] = df[AC_ref].astype(str).astype(int)
     df[AC_alt] = df[AC_alt].astype(str).astype(int)
-    # get ref and alt
+    # get ref and alt columns
     allele_count = df[[AC_ref, AC_alt]]
     # get number of variants 
     total_variants = allele_count.shape[0]
-    allelecount_array = allele_count.to_numpy()
-    # reshape to n_varaints, n_alleles
+    allelecount_array = allele_count.to_numpy() # make into array
     reshape_alelle = allelecount_array.reshape(total_variants,2)
     return reshape_alelle
 
+# def calcFst(df, pop_list):
+#     fst_dict = {}
+#     # pass array for all possible combinations of 2 populations
+#     for i in range(0, len(pop_list)-1):
+#         for j in range(i+1, len(pop_list)):
+#             pop1_array = extract_and_makearray(df, pop_list[i])
+#             pop2_array = extract_and_makearray(df, pop_list[j])
+#             pop1,pop2= sc.hudson_fst(pop1_array, pop2_array)
+#             fst = np.sum(pop1) / np.sum(pop2)
+#             key = pop_list[i]  + "-" + pop_list[j]
+#             value = fst
+#             fst_dict[key] = value
+#     fst_df = pd.DataFrame(fst_dict.items(), columns=['Population Pairs', 'FST'])
+#     # fst_df = pd.DataFrame.from_dict(fst_dict, orient='index', columns=['fst'])
+#     return (fst_df)
+
+
 def calcFst(df, pop_list):
-    fst_dict = {}
-    # pass array for 2 pops
-    for i in range(0, len(pop_list)-1):
-        for j in range(i+1, len(pop_list)):
+    fst_df = pd.DataFrame(index=pop_list, columns=pop_list)
+    # pass array for all possible combinations of 2 populations
+    for i in range(0, len(pop_list)):
+        for j in range(i, len(pop_list)):
             pop1_array = extract_and_makearray(df, pop_list[i])
             pop2_array = extract_and_makearray(df, pop_list[j])
             pop1,pop2= sc.hudson_fst(pop1_array, pop2_array)
             fst = np.sum(pop1) / np.sum(pop2)
-            key = pop_list[i]  + "-" + pop_list[j]
-            value = fst
-            fst_dict[key] = value
-    fst_df = pd.DataFrame(fst_dict.items(), columns=['Population Pairs', 'FST'])
-    # fst_df = pd.DataFrame.from_dict(fst_dict, orient='index', columns=['fst'])
-    return (fst_df)
+            fst_df.iat[i,j] = fst
+            fst_df.iat[j,i] = fst
+    fst_df = fst_df.apply(pd.to_numeric)
+    fig = sb.heatmap(fst_df, cmap = 'Reds', annot = True)
+    heatmap = fig.get_figure()
+    plt.close('all')
+    # encode
+    img = io.BytesIO()
+    heatmap.savefig(img, format='png')
+    img.seek(0)
+    heatmap_url = base64.b64encode(img.getvalue()).decode()
+    heatmap = Markup('<img src="data:image/png;base64,{}" width: 1000px; height: 288px>'.format(heatmap_url))
 
-
+    return (fst_df, heatmap)
 
 
 
