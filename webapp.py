@@ -60,39 +60,12 @@ def stats_pop():
 def download_stats():
 	path = "statistics_data.txt"
 	return send_file(path, as_attachment=True)
-
 @app.route('/download_fst')
 def download_fst():
 	path = "fst_data.txt"
 	return send_file(path, as_attachment=True)
 
 
-# @app.route('/images/<cropzonekey>')
-# def images(cropzonekey):
-#     return render_template("images.html", title=cropzonekey)
-
-# @app.route('/fig/<cropzonekey>')
-# def fig(cropzonekey):
-#     fig = draw_polygons(cropzonekey)
-#     img = StringIO()
-#     fig.savefig(img)
-#     img.seek(0)
-#     return send_file(img, mimetype='image/png')
-
-# @app.route('/plot.png')
-# def plot_png():
-#     fig = create_figure()
-#     output = io.BytesIO()
-#     FigureCanvas(fig).print_png(output)
-#     return Response(output.getvalue(), mimetype='image/png')
-
-# def create_figure():
-# 	fig = Figure()
-# 	axis = fig.add_subplot(1, 1, 1)
-# 	xs = range(100)
-# 	ys = [random.randint(1, 50) for x in xs]
-# 	axis.plot(xs, ys)
-# 	return fig
 
 # start the web server
 if __name__ == '__main__':

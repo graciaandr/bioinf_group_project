@@ -1,63 +1,18 @@
-import sqlite3, csv
-from markupsafe import Markup
+import sqlite3, csv, re, io , base64
 import pandas as pd
 import numpy as np
-import re, io , base64
 import allel as sc
-from math import ceil
-from statistics import mean, median
 import matplotlib.pyplot as plt
 import seaborn as sb
-
-
-# change genotype symbols to alphabet
-def gt_to_alp(data, start_col, end_col):
-    for pos in range(start_col, end_col):
-        data.iloc[:,pos] = np.where(data.iloc[:,pos] == '0|1', data['REF'] + data['ALT'], data.iloc[:,pos])
-        data.iloc[:,pos] = np.where(data.iloc[:,pos] == '1|0', data['ALT'] + data['REF'], data.iloc[:,pos])
-        data.iloc[:,pos] = np.where(data.iloc[:,pos] == '1|1', data['ALT'] + data['ALT'], data.iloc[:,pos])
-        data.iloc[:,pos] = np.where(data.iloc[:,pos] == '0|0', data['REF'] + data['REF'], data.iloc[:,pos])
-    return data
-
-# filter out multi-allelic
-def single_alt(df):
-    df = df[df['ALT_2'].isna()] #extract rows with 1 ALT
-    df.drop(['ALT_2', 'ALT_3'], axis=1, inplace=True)
-    df.rename(columns={"ALT_1" : "ALT"}, inplace=True)
-    return df
-
-# filter out irrelevant gene IDs
-def gene_id_refinement(df):
-    # take out those Gene IDs of the sorts "ENS\d+-ENS\d+""
-    pat = r'(\w+)\-(\w+)'
-    df2 = df[df.GENEID.str.contains(pat) == False]
-    return df2
-    
-# extract SNPs and biallelic
-def snps_only(data):
-    data2 = data['ALT'].str.split(expand=True).apply(lambda x: x.str.len()) <= 1
-    data3 = data[data2.any(axis=1)]
-    data4 = data3['REF'].str.split(expand=True).apply(lambda x: x.str.len()) <= 1
-    data5 = data3[data4.any(axis=1)]
-    return data5
-
-# insert values into table in db
-def insert_table(csv_file, database_name, table_name):
-    with sqlite3.connect(database_name) as con:
-        cursor = con.cursor()
-        with open (csv_file, 'r') as i:
-            reader = csv.reader(i)
-            columns = next(reader) 
-            query = "INSERT INTO " + table_name + " ({0}) VALUES ({1})"
-            query = query.format(','.join(columns), ','.join('?' * len(columns)))
-            for data in reader:
-                cursor.execute(query, data)
-            con.commit()
-
+from markupsafe import Markup
+from math import ceil
+from statistics import mean, median
 
 
 ############### query functions ################
+# make database connection to flask using sqlite3.connect and connection cursor
 
+# user enter snp id (rs)
 def use_id(search_value):
     with sqlite3.connect("chromosome22_snps.db") as connection:
         search_value = search_value.lower()
@@ -65,17 +20,19 @@ def use_id(search_value):
         result = cursor.execute(f"SELECT * FROM snp_table WHERE rsID = '{search_value}'").fetchall()
     return result
 
+# user enter gene name or gene alias
 def use_gene(search_value):
     with sqlite3.connect("chromosome22_snps.db") as connection:
         search_value = search_value.upper()
         cursor = connection.cursor()
         result = cursor.execute(f"""SELECT * FROM snp_table WHERE GENE = '{search_value}'
-                                    OR GENE_ALIAS LIKE '%{search_value}%'
+                                    OR GENE_ALIAS LIKE '%{search_value},%'
                                     """).fetchall()
     return result
 
+# user enter genomic position
+# 2 types of input: ranged number separated by hyphen or a position number
 def use_pos(search_value):
-    # 2 types of input: ranged number separated by hyphen or a position number
     range = r"(^\d+)\-(\d+$)"
     position = r"(^\d+$)"
     with sqlite3.connect("chromosome22_snps.db") as connection:
@@ -90,7 +47,8 @@ def use_pos(search_value):
         else:
             return "Enter a valid position range" #invalid input
 
-
+# search type: radio buttons
+# search value: text box value from html form
 def search_db(search_type, search_value):
     if search_type == "snp_id":
         return use_id(search_value)
@@ -241,49 +199,63 @@ def windowedHetDiv(df, pop, w = None):
 
 ######## plot distributions       
 def shannon_plot(stats_df, pop_list):
+    plt.figure(figsize=(14, 5))
     for pop in pop_list:
         shan_list = stats_df[pop+'_shannon'].tolist()
-        plt.plot(stats_df['positions'], shan_list, markersize = 1, label=pop)
+        x = stats_df['positions'].astype(str).astype(int)
+        plt.plot(x, shan_list, markersize = 1, label=pop)
         plt.legend()
+    
     plt.title('Sliding Window - Shannon Diversity Index')
     plt.ylabel('Shannon Diversity')
     plt.xlabel('Genomic Coordinate')
+
+    n = ceil(stats_df.shape[0])
+    plt.xticks(np.arange(min(x), max(x), n))
     # encode
     img = io.BytesIO()
-    plt.savefig(img, format='png')
+    plt.savefig(img, format='png', bbox_inches='tight')
     img.seek(0)
     plot_url = base64.b64encode(img.getvalue()).decode()
     plt.close('all')
     return plot_url
 
 def tajima_plot(stats_df, pop_list):
+    plt.figure(figsize=(14, 5))
     for pop in pop_list:
         taj_list = stats_df[pop+'_tajima'].tolist()
-        plt.plot(stats_df['positions'],taj_list, markersize = 1, label=pop)
+        x = stats_df['positions'].astype(str).astype(int)
+        plt.plot(x,taj_list, markersize = 1, label=pop)
         plt.legend()
     plt.title("Sliding Window - Tajima's D")
     plt.ylabel("Tajima's D")
     plt.xlabel('Genomic Coordinate')
+
+    n = ceil(stats_df.shape[0])
+    plt.xticks(np.arange(min(x), max(x), n))
     # encode
     img = io.BytesIO()
-    plt.savefig(img, format='png')
+    plt.savefig(img, format='png', bbox_inches='tight')
     img.seek(0)
     plot_url = base64.b64encode(img.getvalue()).decode()
     plt.close('all')
     return plot_url
 
 def hetero_plot(stats_df, pop_list):
+    plt.figure(figsize=(14, 5))
     for pop in pop_list:
         het_list = stats_df[pop+'_hetero'].tolist()
-        # print(het_list)
-        plt.plot(stats_df['positions'], het_list, markersize = 1, label=pop)
+        x = stats_df['positions'].astype(str).astype(int)
+        plt.plot(x, het_list, markersize = 1, label=pop)
         plt.legend()
     plt.title('Sliding Window - Heterozygosity Diversity Index')
     plt.ylabel('Heteozygosity Diversity')
     plt.xlabel('Genomic Coordinate')
+    n = ceil(stats_df.shape[0])
+    plt.xticks(np.arange(min(x), max(x), n))
     # encode
     img = io.BytesIO()
-    plt.savefig(img, format='png')
+    plt.savefig(img, format='png', bbox_inches='tight')
     img.seek(0)
     plot_url = base64.b64encode(img.getvalue()).decode()
     plt.close('all')
@@ -328,23 +300,6 @@ def extract_and_makearray(df, pop):
     reshape_alelle = allelecount_array.reshape(total_variants,2)
     return reshape_alelle
 
-# def calcFst(df, pop_list):
-#     fst_dict = {}
-#     # pass array for all possible combinations of 2 populations
-#     for i in range(0, len(pop_list)-1):
-#         for j in range(i+1, len(pop_list)):
-#             pop1_array = extract_and_makearray(df, pop_list[i])
-#             pop2_array = extract_and_makearray(df, pop_list[j])
-#             pop1,pop2= sc.hudson_fst(pop1_array, pop2_array)
-#             fst = np.sum(pop1) / np.sum(pop2)
-#             key = pop_list[i]  + "-" + pop_list[j]
-#             value = fst
-#             fst_dict[key] = value
-#     fst_df = pd.DataFrame(fst_dict.items(), columns=['Population Pairs', 'FST'])
-#     # fst_df = pd.DataFrame.from_dict(fst_dict, orient='index', columns=['fst'])
-#     return (fst_df)
-
-
 def calcFst(df, pop_list):
     fst_df = pd.DataFrame(index=pop_list, columns=pop_list)
     # pass array for all possible combinations of 2 populations
@@ -357,7 +312,7 @@ def calcFst(df, pop_list):
             fst_df.iat[i,j] = fst
             fst_df.iat[j,i] = fst
     fst_df = fst_df.apply(pd.to_numeric)
-    fig = sb.heatmap(fst_df, cmap = 'Reds', annot = True)
+    fig = sb.heatmap(fst_df, cmap = 'crest', annot = True)
     heatmap = fig.get_figure()
     plt.close('all')
     # encode
@@ -368,34 +323,3 @@ def calcFst(df, pop_list):
     heatmap = Markup('<img src="data:image/png;base64,{}" width: 1000px; height: 288px>'.format(heatmap_url))
 
     return (fst_df, heatmap)
-
-
-
-
-
-
-
-
-# def select_pop(pop_list, data):
-#     data = pd.DataFrame(data, columns=col_list)
-#     filtered_data = data.iloc[:,:8]
-#     for pop in pop_list:
-#         if pop == 'GBR':
-#             pop_cols = [col for col in data.columns if 'GBR' in col]
-#             filtered_data = filtered_data.join(data[pop_cols])
-#         elif pop == 'LWK':
-#             pop_cols = [col for col in data.columns if 'LWK' in col]
-#             filtered_data = filtered_data.join(data[pop_cols])
-#         elif pop == 'MXL':
-#             pop_cols = [col for col in data.columns if 'MXL' in col]
-#             filtered_data = filtered_data.join(data[pop_cols])
-#         elif pop == 'CDX':
-#             pop_cols = [col for col in data.columns if 'CDX' in col]
-#             filtered_data = filtered_data.join(data[pop_cols])
-#         elif pop == 'GIH':
-#             pop_cols = [col for col in data.columns if 'GIH' in col]
-#             filtered_data = filtered_data.join(data[pop_cols])
-#     return filtered_data
-
-
-#####
