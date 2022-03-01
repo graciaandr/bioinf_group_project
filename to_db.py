@@ -1,7 +1,6 @@
 import allel as sc
 import pandas as pd
 import numpy as np
-from pyparsing import dbl_quoted_string
 import csv, sqlite3
 
 
@@ -133,8 +132,9 @@ freq2.rename(columns={"AF_ref":"GBR_AF_REF", "AF_alt":"GBR_AF_ALT",
 
 ################ Insert csv into sql database ################
 
-con = sqlite3.connect("chromosome22_snps.db")
-cursor = con.cursor()
+# connecting to sql database
+connection = sqlite3.connect("chromosome22_snps.db")
+cursor = connection.cursor() # create cursor object
 
 cursor.execute("""CREATE TABLE snp_table (unique_SNP_ID,CHROM,POS,rsID,REF,ALT,IMPACT,GENE,GENEID,
                 MXL_AF_ref,MXL_AF_alt,MXL_AC_ref,MXL_AC_alt,MXL_GT00,MXL_GT0110,MXL_GT11,
@@ -146,5 +146,5 @@ cursor.execute("""CREATE TABLE snp_table (unique_SNP_ID,CHROM,POS,rsID,REF,ALT,I
                 PRIMARY KEY (unique_SNP_ID));""")
 insert_table('SNP_data_derived_AF.csv', 'chromosome22_snps.db', 'snp_table')
 
-con.commit()
-con.close()
+connection.commit()
+connection.close()
