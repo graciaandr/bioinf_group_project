@@ -27,7 +27,7 @@ $flask run
 ```
 
 ### Required packages:
-
+````
 click==8.0.4
 cloudpickle==2.0.0
 cycler==0.11.0
@@ -59,16 +59,17 @@ six==1.16.0
 toolz==0.11.2
 visitor==0.1.3
 Werkzeug==2.0.3
+````
 
 ### Features of Software
 
-*** SNP search
-*** Browse for SNPs via rs ID, Gene Name (or Aliases), or Genomic Coordinates
-*** Summary statistics selection​
-*** Select between Shannon Diversity, Expected Heterozygosity and Tajima’s D
-*** Select FST Analysis
-*** Population selection​
-*** Choose one or more of the 5 provided populations 
-*** Download stats as TXT
-*** Download the FST or other stats​ data frame as a txt file
-*** Visualise summary stats
+* SNP search
+* Browse for SNPs via rs ID, Gene Name (or Aliases), or Genomic Coordinates
+* Summary statistics selection​
+* Select between Shannon Diversity, Expected Heterozygosity and Tajima’s D
+* Select FST Analysis
+* Population selection​
+* Choose one or more of the 5 provided populations 
+* Download stats as TXT
+* Download the FST or other stats​ data frame as a txt file
+* Visualise summary stats
