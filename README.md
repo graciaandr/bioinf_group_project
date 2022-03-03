@@ -7,8 +7,7 @@ The aim of the website is to provide researchers with a  tool to investigate the
 ### Running the software locally:
 
 In order to deploy the website locally, download the team_celine_webapp} directory from the GitHub page (see https://github.com/graciaandr/bioinf_group_project) and the database file in \texttt{.db} format from Google Drive using the following link:
-
--- drivelink missing --
+https://drive.google.com/drive/folders/1g5-2Yr40tCxM30NLZQ0zmyzaBFjKPJIq?usp=sharing
 
 Install the required packages to the local machine by running:
 
