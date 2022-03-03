@@ -1,5 +1,7 @@
 body {
-    background-color: lightsteelblue;
+    background-color: black;
+    color: white;
+    margin: 0;
   }
 
 table {
@@ -14,15 +16,6 @@ th {
     text-align: center;
 }
 
-/* th {
-    position: -webkit-sticky;
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    background-color: white;
-    border-bottom: 3px solid;
-} */
-
 td {
     height: 35px;
     border: 2px solid ;
@@ -34,11 +27,21 @@ td {
 }
 
 h1 {
-    color: black;
-    padding: 10px;
+    color: #008282;
+    padding: 20px 15px 0px 0px;
+    font-size: 30px;
 }
 
 h2 {
     font-size: 20px;
+    color: #00b2ae;
     text-decoration: underline;
+}
+
+.container {
+    width: 95%;
+    padding-right: 5px;
+    padding-left: 5px;
+    margin-right: 0;
+    margin-left: 15px;
 }
