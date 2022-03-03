@@ -198,7 +198,7 @@ def shannon_plot(stats_df, pop_list):
     ax.get_xaxis().get_major_formatter().set_scientific(False)
     # format x-axis ticks and labels
     n = ceil(stats_df.shape[0])
-    plt.xticks(np.arange(min(x), max(x), n/0.5), rotation='vertical')
+    plt.xticks(np.arange(min(x), max(x), n/0.1), rotation='vertical')
     # encode using base64 to be passed on to flask html
     img = io.BytesIO()
     plt.savefig(img, format='png', bbox_inches='tight')
@@ -223,7 +223,7 @@ def tajima_plot(stats_df, pop_list):
     ax.get_xaxis().get_major_formatter().set_scientific(False)
     # format x-axis ticks and labels
     n = ceil(stats_df.shape[0])
-    plt.xticks(np.arange(min(x), max(x), n/0.5), rotation='vertical')
+    plt.xticks(np.arange(min(x), max(x), n/0.1), rotation='vertical')
     # encode using base64 to be passed on to flask html
     img = io.BytesIO()
     plt.savefig(img, format='png', bbox_inches='tight')
@@ -248,7 +248,7 @@ def hetero_plot(stats_df, pop_list):
     ax.get_xaxis().get_major_formatter().set_scientific(False)
     # format x-axis ticks and labels
     n = ceil(stats_df.shape[0])
-    plt.xticks(np.arange(min(x), max(x), n/0.5), rotation='vertical')
+    plt.xticks(np.arange(min(x), max(x), n/0.1), rotation='vertical')
     # encode using base64 to be passed on to flask html
     img = io.BytesIO()
     plt.savefig(img, format='png', bbox_inches='tight')
