@@ -14,7 +14,6 @@ Install the required packages to the local machine by running:
 ````
 $python -m pip install -upgrade pip
 $pip install -r requirements.txt
-\end{lstlisting}
 ````
 Run the software on http://localhost:5000/ using:
 
