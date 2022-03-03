@@ -1,20 +1,42 @@
+<!-- use base.html as template -->
 {% extends 'base.html' %}
 
+<!-- browser tab name -->
 {% block head %}
     {% block title %} Team Celine {% endblock %}
 {% endblock %}
 
 {% block content %}
     <link rel= "stylesheet" href= "{{ url_for('static',filename='css/style.css') }}">
-   <br><a href="/">back to home page</a><br><br>
-   <h2>Results for: {{search_type}}: {{search_value}}</h2><br>
+    
+    <!-- show user's input -->
+    <br><span style="color: #00b2ae;"><b>Your search:</b></span><br>
+    {% if search_type == 'snp_id' %}
+        SNP ID:
+    {% elif search_type == 'gene_name' %}
+        Gene Name / Alias:
+    {% elif search_type == 'position' %}
+        Genomic Coordinate:
+    {% endif %}
+    <span style="font-weight: bold; font-size: 18px;">{{search_value.upper()}}</span>
+    <hr size="8" color="white">
+    <br>
+
    <form action="/stats_pop_select" method="post">
+
+    <!-- SEARCH TYPE AND SEARCH VALUE FROM INDEX.HTML TO SEARCH DATABASE AND CALCULATE STATISTICS -->
+        <input type="text" name="search_type" value="{{ search_type }}" style="display: none;">
+        <input type="text" name="search_value" value="{{ search_value }}" style="display: none;">
+
         <h2>Summary Statistics:</h2>
         <input type="checkbox" name="summarystats" value="shannon"> Shannon Diversity
         <span class="tab"></span><input type="checkbox" name="summarystats" value="tajima"> Tajima D
         <span class="tab"></span><input type="checkbox" name="summarystats" value="hetero"> Heterozygosity<br><br>
 
         <h2>Choose population ancestry:</h2>
+        <span style="color:rgb(175, 237, 241);">
+            FST Statistics will be calculated without selecting any summary statistics if multiple populations are chosen
+        </span><br><br>
         <input type="text" name="search_type" value="{{ search_type }}" style="display: none;">
         <input type="text" name="search_value" value="{{ search_value }}" style="display: none;">
         <input type="checkbox" name="population" value="GBR"> European - British (GBR) <br>
@@ -26,34 +48,49 @@
         <br><br>
     </form><br>
 
-    <h2>Statistics:</h2><span class="tab"></span><a href="{{ url_for('download_stats') }}">Download as txt file</a><br>
+    <p style="font-size: 18px; font-weight: bold;">
+        Results:
+    </p>
+    {% if stats_list|length >= 1 %}
+        <!-- SUMMARY STATISTICS DOWNLOAD -->
+        <div style="font-size: 15px; font-weight: bold;">
+            Summary Statistics: </span>
+        <form action="/download_statistics">
+            <input type="submit" value="Download" style="display: inline-block;">
+        </form>
+        </div>
+    {% endif %}
     <br>
 
-    <!-- fst table -->
-    {% if pop_list|length > 1 %}
-        <a href="{{ url_for('download_fst') }}">Download fst file</a>
-        {% for fst in fsts %}
-            {{ fst|safe }}
-        {% endfor %}
-    {% endif %}
-
-    <!-- plots -->
+    <!-- SUMMARY STATISTICS PLOTS -->
     <p>
         {% for value in model_plot %}
-            {{value}}
+            {{value}}<br><br>
         {% endfor %}
-
     </p>
 
-<!-- stats_df table -->
-    {% if stats_list|length > 0 %}
+    <!-- FST HEATMAP AND DOWNLOAD -->
+    {% if pop_list|length > 1 %}
+        <div style="font-size: 15px; font-weight: bold;">
+            FST: </span>
+        <form action="/download_fst">
+            <input type="submit" value="Download" style="display: inline-block;">
+        </form>
+        </div>
+        <br>
+        {{heatmap}}
+    {% endif %}
+<br><br>
+
+<!-- SUMMARY STATISTICS TABLE -->
+    <!-- {% if stats_list|length > 0 %}
         {% for table in tables %}
             {{ table|safe }}
         {% endfor %}
-    {% endif %}
+    {% endif %} -->
 
-
-    <p style="font-weight: bold;"> Number of Results: {{data|length}} </p>
+<!-- RESULT SNP DATA FROM USER'S INPUT -->
+    <div style="font-weight: bold; font-size: 15px;"> Number of Results: {{data|length}} </div>
     <table style="width:100%">
         <col>
         <colgroup span="4"></colgroup>
@@ -69,28 +106,34 @@
             <th colspan="4" scope="colgroup">CDX</th>
             <th colspan="4" scope="colgroup">GIH</th>
             <th rowspan="2">Gene Alias</th>
+            <th rowspan="2">Derived Allele Freq</th>
         </tr>
         <tr>
-            <th scope="col">AF</th><th scope="col">GT0/0</th><th scope="col">GT0/1</th><th scope="col">GT1/1</th>
-            <th scope="col">AF</th><th scope="col">GT0/0</th><th scope="col">GT0/1</th><th scope="col">GT1/1</th>
-            <th scope="col">AF</th><th scope="col">GT0/0</th><th scope="col">GT0/1</th><th scope="col">GT1/1</th>
-            <th scope="col">AF</th><th scope="col">GT0/0</th><th scope="col">GT0/1</th><th scope="col">GT1/1</th>
-            <th scope="col">AF</th><th scope="col">GT0/0</th><th scope="col">GT0/1</th><th scope="col">GT1/1</th>
+            <th scope="col">ALT AF</th><th scope="col">GT0/0</th><th scope="col">GT0/1</th><th scope="col">GT1/1</th>
+            <th scope="col">ALT AF</th><th scope="col">GT0/0</th><th scope="col">GT0/1</th><th scope="col">GT1/1</th>
+            <th scope="col">ALT AF</th><th scope="col">GT0/0</th><th scope="col">GT0/1</th><th scope="col">GT1/1</th>
+            <th scope="col">ALT AF</th><th scope="col">GT0/0</th><th scope="col">GT0/1</th><th scope="col">GT1/1</th>
+            <th scope="col">ALT AF</th><th scope="col">GT0/0</th><th scope="col">GT0/1</th><th scope="col">GT1/1</th>
         </tr>
+        <!-- POPULATE TABLE -->
         {% for value in data %}
             <tr>
-                <td>{{value[2]}}</td><td>{{value[3]}}</td><td>{{value[7]}}</td><td>{{value[4]}}</td> <td>{{value[5]}}</td>
+                <td>{{value[2]}}</td>
+                <td>
+                    <!-- REPLACE 0 AS N/A FOR SNPS WITHOUT RS NUMBER -->
+                    {% if value[3] == '0' %}
+                        N/A
+                    {% else %}
+                        {{value[3]}}
+                    {% endif %}
+                </td>
+                <td>{{value[7]}}</td><td>{{value[4]}}</td> <td>{{value[5]}}</td>
                 <td>{{value[31]}}</td><td>{{value[34]}}</td><td>{{value[35]}}</td><td>{{value[36]}}</td>
                 <td>{{value[24]}}</td><td>{{value[27]}}</td><td>{{value[28]}}</td><td>{{value[29]}}</td>
                 <td>{{value[10]}}</td><td>{{value[13]}}</td><td>{{value[14]}}</td><td>{{value[15]}}</td>
                 <td>{{value[17]}}</td><td>{{value[20]}}</td><td>{{value[21]}}</td><td>{{value[22]}}</td>
                 <td>{{value[38]}}</td><td>{{value[41]}}</td><td>{{value[42]}}</td><td>{{value[43]}}</td>
-
-                <!-- <td>{{value[24]}}</td>
-                <td>{{value[10]}}</td>
-                <td>{{value[17]}}</td>
-                <td>{{value[38]}}</td> -->
-                <td>{{value[44]}}</td>
+                <td>{{value[44]}}</td><td>{{value[48]}}</td>
             </tr>
         {% endfor %}
     </table><br><br>
